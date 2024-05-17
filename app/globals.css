@@ -31,3 +31,29 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Custom styles for the home page */
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.iframe-container {
+  width: 100%;
+  max-width: 768px; /* Adjust max-width as needed */
+}
+
+iframe {
+  width: 100%;
+  height: 450px;
+  border: 0;
+}
