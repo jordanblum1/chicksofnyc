@@ -4,7 +4,7 @@ import MenuBar from "./components/MenuBar";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4" style={{ paddingTop: '64px' }}>
       <MenuBar />
       <div className="flex flex-col items-center mb-8">
         <Image

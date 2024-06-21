@@ -14,22 +14,39 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const drawerWidth = 240;
 const navItems = [{name: 'Home', link: '/'}, {name: 'About', link: '/about'}];
 
 export default function MenuBar() {
     const [mobileOpen, setMobileOpen] = React.useState(false);
+    const [scrollPosition, setScrollPosition] = React.useState(0);
 
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
     };
 
+    const handleScroll = () => {
+        const position = window.pageYOffset;
+        setScrollPosition(position);
+    };
+
+    React.useEffect(() => {
+        window.addEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
     const drawer = (
         <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
-            <Typography variant="h6" sx={{ my: 2 }}>
-                CNYC
-            </Typography>
+            <Image
+                src="/chicks-of-nyc-logo.png"
+                alt="Logo"
+                width={100}
+                height={100}
+            />
             <Divider />
             <List>
                 {navItems.map((item) => (
@@ -46,7 +63,16 @@ export default function MenuBar() {
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            <AppBar component="nav" sx={{ backgroundColor: '#5D4037' }}>
+            <AppBar
+                component="nav"
+                sx={{
+                    backgroundColor: scrollPosition > 0 ? 'transparent' : 'rgba(93, 64, 55, 0.8)',
+                    transition: 'background-color 0.3s',
+                    position: 'fixed',
+                    top: 0,
+                    width: '100%'
+                }}
+            >
                 <Toolbar>
                     <IconButton
                         color="inherit"
