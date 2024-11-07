@@ -1,12 +1,13 @@
 'use client';
 import { useState } from 'react';
 import MenuBar from '../components/MenuBar';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import Lottie from 'lottie-react';
-// You can choose either animation:
-import wingAnimation from '../animations/wings.json';  // for wings
-// or
-import fireworkAnimation from '../animations/firework.json'; // for fireworks
+
+// Dynamic import with no SSR
+const SuccessAnimation = dynamic(() => import('../components/SuccessAnimation'), {
+  ssr: false,
+});
 
 export default function About() {
   const [formState, setFormState] = useState({
@@ -52,9 +53,9 @@ export default function About() {
   };
 
   return (
-    <div className="page-content bg-[#FFF8EB] relative">
+    <div className="page-content bg-[#FFF8EB]">
       <MenuBar />
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <section className="hero text-center py-16 rounded-2xl bg-gradient-to-r from-[#5D4037] to-[#4E342E] text-white mb-12">
           <h1 className="text-5xl font-bold mb-4">About the Wing Man</h1>
           <p className="text-xl text-[#FFF8EB] opacity-90">Discovering NYC's Hidden Wing Gems</p>
@@ -168,18 +169,7 @@ export default function About() {
         </section>
       </div>
 
-      {showAnimation && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none bg-black/30">
-          <div className="w-64 h-64">
-            <Lottie
-              animationData={wingAnimation}
-              loop={false}
-              autoplay={true}
-              onComplete={() => setShowAnimation(false)}
-            />
-          </div>
-        </div>
-      )}
+      {showAnimation && <SuccessAnimation onComplete={() => setShowAnimation(false)} />}
     </div>
   );
 }
