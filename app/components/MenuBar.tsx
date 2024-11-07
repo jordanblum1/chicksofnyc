@@ -2,7 +2,6 @@ import * as React from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
-import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
@@ -11,7 +10,6 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import MenuIcon from '@mui/icons-material/Menu';
 import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -40,18 +38,20 @@ export default function MenuBar() {
     }, []);
 
     const drawer = (
-        <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
-            <Image
-                src="/chicks-of-nyc-logo.png"
-                alt="Logo"
-                width={100}
-                height={100}
-            />
-            <Divider />
+        <Box onClick={handleDrawerToggle} className="mobile-drawer">
+            <div className="drawer-logo">
+                <Image
+                    src="/chicks-of-nyc-logo.png"
+                    alt="Logo"
+                    width={100}
+                    height={100}
+                    className="logo-image"
+                />
+            </div>
             <List>
                 {navItems.map((item) => (
                     <ListItem key={item.name} disablePadding>
-                        <ListItemButton sx={{ textAlign: 'center' }}>
+                        <ListItemButton className="drawer-item">
                             <Link href={item.link}><ListItemText primary={item.name} /></Link>
                         </ListItemButton>
                     </ListItem>
@@ -63,36 +63,35 @@ export default function MenuBar() {
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            <AppBar
-                component="nav"
-                sx={{
-                    backgroundColor: scrollPosition > 0 ? 'transparent' : 'rgba(93, 64, 55, 0.8)',
-                    transition: 'background-color 0.3s',
-                    position: 'fixed',
-                    top: 0,
-                    width: '100%'
-                }}
-            >
-                <Toolbar>
+            <AppBar component="nav" className={`navbar ${scrollPosition > 0 ? 'scrolled' : ''}`}>
+                <Toolbar className="navbar-content">
+                    <div className="navbar-logo">
+                        <Link href="/">
+                            <Image
+                                src="/chicks-of-nyc-logo.png"
+                                alt="Logo"
+                                width={50}
+                                height={50}
+                                className="logo-image"
+                            />
+                        </Link>
+                    </div>
+                    
                     <IconButton
                         color="inherit"
                         aria-label="open drawer"
                         edge="start"
                         onClick={handleDrawerToggle}
-                        sx={{ mr: 2, display: { sm: 'none' } }}
+                        className="mobile-menu-button"
                     >
                         <MenuIcon />
                     </IconButton>
-                    <Typography
-                        variant="h6"
-                        component="div"
-                        sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' }, color: '#FFF7EA' }}
-                    >
-                        CNYC
-                    </Typography>
-                    <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+
+                    <Box className="desktop-menu">
                         {navItems.map((item) => (
-                            <Link key={item.name} href={item.link}><Button sx={{ color: '#FFF8EB' }}>{item.name}</Button></Link>
+                            <Link key={item.name} href={item.link}>
+                                <Button className="nav-button">{item.name}</Button>
+                            </Link>
                         ))}
                     </Box>
                 </Toolbar>
@@ -103,12 +102,9 @@ export default function MenuBar() {
                     open={mobileOpen}
                     onClose={handleDrawerToggle}
                     ModalProps={{
-                        keepMounted: true, // Better open performance on mobile.
+                        keepMounted: true,
                     }}
-                    sx={{
-                        display: { xs: 'block', sm: 'none' },
-                        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, backgroundColor: '#4E342E' },
-                    }}
+                    className="mobile-drawer-container"
                 >
                     {drawer}
                 </Drawer>
