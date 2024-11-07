@@ -1,45 +1,16 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useWingSpots } from "../hooks/useWingSpots";
 import MenuBar from "../components/MenuBar";
-
-interface WingSpot {
-  id: string;
-  name: string;
-  address: string;
-  overallRanking: number;
-  sauce: number;
-  crispyness: number;
-  meat: number;
-}
+import { formatNumber } from "../utils/formatNumber";
 
 export default function Rankings() {
-  const [spots, setSpots] = useState<WingSpot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchSpots = async () => {
-      try {
-        const response = await fetch('/api/get-all-wings');
-        if (!response.ok) throw new Error('Failed to fetch');
-        const data = await response.json();
-        setSpots(data.data);
-      } catch (err) {
-        setError('Failed to load wing spots');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSpots();
-  }, []);
+  const { spots, loading, error } = useWingSpots('/api/get-all-wings');
 
   return (
     <main className="min-h-screen bg-[#FFF8EB]">
       <MenuBar />
       <div className="max-w-6xl mx-auto px-4 py-8" style={{ paddingTop: '84px' }}>
-        <h1 className="text-3xl font-bold mb-6 text-center">All Wing Rankings</h1>
+        <h1 className="text-3xl font-bold mb-6">All Wing Rankings</h1>
         
         {loading && (
           <div className="text-center py-8">
@@ -76,10 +47,10 @@ export default function Rankings() {
                     <td className="px-4 py-3 font-medium">{index + 1}</td>
                     <td className="px-4 py-3 font-medium">{spot.name}</td>
                     <td className="px-4 py-3 text-gray-600">{spot.address}</td>
-                    <td className="px-4 py-3 text-center font-bold">{spot.overallRanking}/5</td>
-                    <td className="px-4 py-3 text-center">{spot.sauce}/5</td>
-                    <td className="px-4 py-3 text-center">{spot.crispyness}/5</td>
-                    <td className="px-4 py-3 text-center">{spot.meat}/5</td>
+                    <td className="px-4 py-3 text-center font-bold">{formatNumber(spot.overallRanking)}/5</td>
+                    <td className="px-4 py-3 text-center">{formatNumber(spot.sauce)}/5</td>
+                    <td className="px-4 py-3 text-center">{formatNumber(spot.crispyness)}/5</td>
+                    <td className="px-4 py-3 text-center">{formatNumber(spot.meat)}/5</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,40 +1,13 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useWingSpots } from "./hooks/useWingSpots";
 import Image from "next/image";
 import MenuBar from "./components/MenuBar";
-
-interface WingSpot {
-  id: string;
-  name: string;
-  address: string;
-  overallRanking: number;
-  sauce: number;
-  crispyness: number;
-  meat: number;
-}
+import { formatNumber } from "./utils/formatNumber";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDroplet, faFire, faDrumstickBite } from '@fortawesome/free-solid-svg-icons';
 
 export default function Home() {
-  const [topSpots, setTopSpots] = useState<WingSpot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchTopSpots = async () => {
-      try {
-        const response = await fetch('/api/get-top-wings');
-        if (!response.ok) throw new Error('Failed to fetch');
-        const data = await response.json();
-        setTopSpots(data.data);
-      } catch (err) {
-        setError('Failed to load top wing spots');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTopSpots();
-  }, []);
+  const { spots: topSpots, loading, error } = useWingSpots('/api/get-top-wings');
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4" style={{ paddingTop: '64px' }}>
@@ -49,9 +22,8 @@ export default function Home() {
         />
       </div>
 
-      {/* Top Wings Section */}
       <div className="w-full max-w-3xl mb-8">
-        <h2 className="text-2xl font-bold mb-4 text-center">Top Wing Spots</h2>
+        <h2 className="text-2xl font-bold mb-4">Top Wing Spots</h2>
         {loading && <p className="text-center">Loading top spots...</p>}
         {error && <p className="text-center text-red-500">{error}</p>}
         {topSpots.length > 0 && (
@@ -64,19 +36,43 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-semibold">#{index + 1} {spot.name}</h3>
                   <span className="text-lg font-bold text-[#5D4037]">
-                    {spot.overallRanking}/5
+                    {formatNumber(spot.overallRanking)}/5
                   </span>
                 </div>
                 <p className="text-gray-600 mt-1">{spot.address}</p>
                 <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className="font-semibold">Sauce:</span> {spot.sauce}/5
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <FontAwesomeIcon 
+                        icon={faDroplet} 
+                        className="text-red-500 w-4 h-4"
+                        title="Sauce Rating"
+                      />
+                      <span className="text-xs text-gray-500 font-medium">Sauce</span>
+                    </div>
+                    <span className="font-semibold">{formatNumber(spot.sauce)}/5</span>
                   </div>
-                  <div>
-                    <span className="font-semibold">Crispy-ness:</span> {spot.crispyness}/5
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <FontAwesomeIcon 
+                        icon={faFire} 
+                        className="text-orange-500 w-4 h-4"
+                        title="Crispy-ness Rating"
+                      />
+                      <span className="text-xs text-gray-500 font-medium">Crispy</span>
+                    </div>
+                    <span className="font-semibold">{formatNumber(spot.crispyness)}/5</span>
                   </div>
-                  <div>
-                    <span className="font-semibold">Meat:</span> {spot.meat}/5
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <FontAwesomeIcon 
+                        icon={faDrumstickBite} 
+                        className="text-[#8B4513] w-4 h-4"
+                        title="Meat Rating"
+                      />
+                      <span className="text-xs text-gray-500 font-medium">Meat</span>
+                    </div>
+                    <span className="font-semibold">{formatNumber(spot.meat)}/5</span>
                   </div>
                 </div>
               </div>
