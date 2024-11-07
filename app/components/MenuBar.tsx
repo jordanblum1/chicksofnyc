@@ -15,7 +15,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 const drawerWidth = 240;
-const navItems = [{name: 'Home', link: '/'}, {name: 'About', link: '/about'}];
+const navItems = [
+  {name: 'Home', link: '/'}, 
+  {name: 'Rankings', link: '/rankings'},
+  {name: 'About', link: '/about'}
+];
 
 export default function MenuBar() {
     const [mobileOpen, setMobileOpen] = React.useState(false);
