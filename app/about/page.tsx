@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default function About() {
   return (
-    <div className="page-content bg-[#FFF8EB]">
+    <div className="page-content bg-[#FFF8EB] min-h-screen">
       <MenuBar />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <section className="hero text-center py-16 rounded-2xl bg-gradient-to-r from-[#5D4037] to-[#4E342E] text-white mb-12">
