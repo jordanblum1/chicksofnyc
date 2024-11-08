@@ -42,10 +42,14 @@ export default function Rankings() {
                     </div>
                     <p className="text-sm text-gray-600 mt-2 truncate">{spot.address}</p>
                   </div>
-                  <div className="flex items-center gap-2 ml-4 shrink-0">
+                  <div className={`flex items-center gap-2 ml-4 shrink-0 ${
+                    spot.overallRanking < 2.5 ? 'text-red-500' : 
+                    spot.overallRanking >= 4 ? 'text-green-500' : 
+                    'text-yellow-500'
+                  }`}>
                     <FontAwesomeIcon 
                       icon={faStar} 
-                      className="text-yellow-500 w-4 h-4"
+                      className="w-4 h-4"
                     />
                     <span className="font-bold whitespace-nowrap">{formatNumber(spot.overallRanking)}/5</span>
                   </div>
@@ -125,7 +129,13 @@ export default function Rankings() {
                       <td className="px-6 py-4 font-medium">{index + 1}</td>
                       <td className="px-6 py-4 font-medium">{spot.name}</td>
                       <td className="px-6 py-4 text-gray-600">{spot.address}</td>
-                      <td className="px-6 py-4 text-center font-bold">{formatNumber(spot.overallRanking)}/5</td>
+                      <td className={`px-6 py-4 text-center font-bold ${
+                        spot.overallRanking < 2.5 ? 'text-red-500' : 
+                        spot.overallRanking >= 4 ? 'text-green-500' : 
+                        'text-yellow-500'
+                      }`}>
+                        {formatNumber(spot.overallRanking)}/5
+                      </td>
                       <td className="px-6 py-4 text-center">{formatNumber(spot.sauce)}/5</td>
                       <td className="px-6 py-4 text-center">{formatNumber(spot.crispyness)}/5</td>
                       <td className="px-6 py-4 text-center">{formatNumber(spot.meat)}/5</td>
