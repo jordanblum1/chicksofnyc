@@ -13,25 +13,23 @@ import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
 
 const drawerWidth = 240;
 const navItems = [
   {name: 'Home', link: '/'}, 
   {name: 'Rankings', link: '/rankings'},
-  {name: 'About', link: '/about'}
+  {name: 'About', link: '/about'},
+  {name: 'Submit a Spot', link: '/submit'}
 ];
 
 export default function MenuBar() {
-    const [mobileOpen, setMobileOpen] = React.useState(false);
-    const [scrollPosition, setScrollPosition] = React.useState(0);
-
-    const handleDrawerToggle = () => {
-        setMobileOpen((prevState) => !prevState);
-    };
+    const [isOpen, setIsOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     const handleScroll = () => {
         const position = window.pageYOffset;
-        setScrollPosition(position);
+        setIsScrolled(position > 0);
     };
 
     React.useEffect(() => {
@@ -42,7 +40,7 @@ export default function MenuBar() {
     }, []);
 
     const drawer = (
-        <Box onClick={handleDrawerToggle} className="mobile-drawer">
+        <Box onClick={() => setIsOpen(false)} className="mobile-drawer">
             <div className="drawer-logo">
                 <Image
                     src="/chicks-of-nyc-logo.png"
@@ -67,13 +65,13 @@ export default function MenuBar() {
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            <AppBar component="nav" className={`navbar ${scrollPosition > 0 ? 'scrolled' : ''}`}>
+            <AppBar component="nav" className={`navbar fixed ${isScrolled ? 'scrolled' : ''}`}>
                 <Toolbar className="navbar-content">
                     <div className="navbar-logo">
                         <Link href="/">
                             <Image
                                 src="/chicks-of-nyc-logo.png"
-                                alt="Logo"
+                                alt="NYC Chicks Logo"
                                 width={50}
                                 height={50}
                                 className="logo-image"
@@ -81,34 +79,34 @@ export default function MenuBar() {
                         </Link>
                     </div>
                     
+                    <div className="desktop-menu">
+                        <Link href="/" className="nav-button">
+                            Home
+                        </Link>
+                        <Link href="/rankings" className="nav-button">
+                            Rankings
+                        </Link>
+                        <Link href="/about" className="nav-button">
+                            About
+                        </Link>
+                        <Link href="/submit" className="nav-button">
+                            Submit a Wing Spot
+                        </Link>
+                    </div>
+
                     <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        edge="start"
-                        onClick={handleDrawerToggle}
                         className="mobile-menu-button"
+                        onClick={() => setIsOpen(true)}
                     >
                         <MenuIcon />
                     </IconButton>
-
-                    <Box className="desktop-menu">
-                        {navItems.map((item) => (
-                            <Link key={item.name} href={item.link}>
-                                <Button className="nav-button">{item.name}</Button>
-                            </Link>
-                        ))}
-                    </Box>
                 </Toolbar>
             </AppBar>
             <nav>
                 <Drawer
-                    variant="temporary"
-                    open={mobileOpen}
-                    onClose={handleDrawerToggle}
-                    ModalProps={{
-                        keepMounted: true,
-                    }}
-                    className="mobile-drawer-container"
+                    anchor="right"
+                    open={isOpen}
+                    onClose={() => setIsOpen(false)}
                 >
                     {drawer}
                 </Drawer>
