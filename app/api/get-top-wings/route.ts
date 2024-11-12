@@ -9,6 +9,12 @@ Airtable.configure({
 const base = Airtable.base(process.env.AIRTABLE_BASE_ID!);
 
 export async function GET() {
+  // Add cache control headers
+  const headers = {
+    'Cache-Control': 'no-store, max-age=0',
+    'Content-Type': 'application/json',
+  };
+
   try {
     const records = await base('wing-spots').select({
       maxRecords: 5,
@@ -26,12 +32,12 @@ export async function GET() {
       meat: record.fields['Meat (0-10)']
     }));
 
-    return NextResponse.json({ success: true, data: topSpots });
+    return NextResponse.json({ success: true, data: topSpots }, { headers });
   } catch (error) {
     console.error('Airtable fetch error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch rankings' },
-      { status: 500 }
+      { status: 500, headers }
     );
   }
 } 

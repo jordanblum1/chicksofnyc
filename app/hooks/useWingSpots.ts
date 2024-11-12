@@ -10,8 +10,8 @@ interface WingSpot {
   meat: number;
 }
 
-// Cache duration in milliseconds (5 minutes)
-const CACHE_DURATION = 2 * 60 * 1000;
+// Cache duration in milliseconds (30 seconds instead of 5 minutes)
+const CACHE_DURATION = 30 * 1000;
 
 export function useWingSpots(endpoint: string) {
   const [spots, setSpots] = useState<WingSpot[]>([]);
