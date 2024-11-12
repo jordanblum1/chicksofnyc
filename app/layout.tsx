@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "NYC Chicks",
-  description: "Best chicken wings in New York",
+  title: "Chicks of NYC",
+  description: "Finding the best chicken wings in New York",
 };
 
 export default function RootLayout({
