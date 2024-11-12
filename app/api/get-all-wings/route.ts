@@ -30,7 +30,13 @@ export async function GET() {
       meat: record.fields['Meat (0-10)']
     }));
 
-    return NextResponse.json({ success: true, data: spots }, { headers });
+    const response = NextResponse.json(
+      { success: true, data: spots }, 
+      { headers }
+    );
+    response.headers.set('x-next-cache-tags', '/api/get-all-wings');
+    return response;
+    
   } catch (error) {
     console.error('Airtable fetch error:', error);
     return NextResponse.json(
