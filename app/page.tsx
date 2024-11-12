@@ -76,8 +76,8 @@ export default function Home() {
                   <div className="flex items-center justify-between">
                     <h3 className="text-xl font-semibold">#{index + 1} {spot.name}</h3>
                     <span className={`text-lg font-bold ${
-                      spot.overallRanking < 2.5 ? 'text-red-500' : 
-                      spot.overallRanking >= 4 ? 'text-green-500' : 
+                      spot.overallRanking < 5 ? 'text-red-500' : 
+                      spot.overallRanking >= 8 ? 'text-green-500' : 
                       'text-yellow-500'
                     }`}>
                       {formatNumber(spot.overallRanking)}/10
