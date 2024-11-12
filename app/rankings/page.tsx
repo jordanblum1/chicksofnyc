@@ -51,7 +51,7 @@ export default function Rankings() {
                       icon={faStar} 
                       className="w-4 h-4"
                     />
-                    <span className="font-bold whitespace-nowrap">{formatNumber(spot.overallRanking)}/5</span>
+                    <span className="font-bold whitespace-nowrap">{formatNumber(spot.overallRanking)}/10</span>
                   </div>
                 </div>
                 
@@ -62,7 +62,7 @@ export default function Rankings() {
                       className="text-red-500 w-4 h-4 shrink-0"
                     />
                     <span className="text-xs text-gray-500">Sauce</span>
-                    <span className="font-semibold ml-1">{formatNumber(spot.sauce)}/5</span>
+                    <span className="font-semibold ml-1">{formatNumber(spot.sauce)}/10</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <FontAwesomeIcon 
@@ -70,7 +70,7 @@ export default function Rankings() {
                       className="text-orange-500 w-4 h-4 shrink-0"
                     />
                     <span className="text-xs text-gray-500">Crispy</span>
-                    <span className="font-semibold ml-1">{formatNumber(spot.crispyness)}/5</span>
+                    <span className="font-semibold ml-1">{formatNumber(spot.crispyness)}/10</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <FontAwesomeIcon 
@@ -78,7 +78,7 @@ export default function Rankings() {
                       className="text-[#8B4513] w-4 h-4 shrink-0"
                     />
                     <span className="text-xs text-gray-500">Meat</span>
-                    <span className="font-semibold ml-1">{formatNumber(spot.meat)}/5</span>
+                    <span className="font-semibold ml-1">{formatNumber(spot.meat)}/10</span>
                   </div>
                 </div>
               </div>
@@ -136,9 +136,9 @@ export default function Rankings() {
                       }`}>
                         {formatNumber(spot.overallRanking)}/10
                       </td>
-                      <td className="px-6 py-4 text-center">{formatNumber(spot.sauce)}/5</td>
-                      <td className="px-6 py-4 text-center">{formatNumber(spot.crispyness)}/5</td>
-                      <td className="px-6 py-4 text-center">{formatNumber(spot.meat)}/5</td>
+                      <td className="px-6 py-4 text-center">{formatNumber(spot.sauce)}/10</td>
+                      <td className="px-6 py-4 text-center">{formatNumber(spot.crispyness)}/10</td>
+                      <td className="px-6 py-4 text-center">{formatNumber(spot.meat)}/10</td>
                     </tr>
                   ))}
                 </tbody>

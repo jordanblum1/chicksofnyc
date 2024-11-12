@@ -80,7 +80,7 @@ export default function Home() {
                       spot.overallRanking >= 4 ? 'text-green-500' : 
                       'text-yellow-500'
                     }`}>
-                      {formatNumber(spot.overallRanking)}/5
+                      {formatNumber(spot.overallRanking)}/10
                     </span>
                   </div>
                   <p className="text-gray-600 mt-1">{spot.address}</p>
@@ -94,7 +94,7 @@ export default function Home() {
                         />
                         <span className="text-xs text-gray-500 font-medium">Sauce</span>
                       </div>
-                      <span className="font-semibold">{formatNumber(spot.sauce)}/5</span>
+                      <span className="font-semibold">{formatNumber(spot.sauce)}/10</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1.5">
@@ -105,7 +105,7 @@ export default function Home() {
                         />
                         <span className="text-xs text-gray-500 font-medium">Crispy</span>
                       </div>
-                      <span className="font-semibold">{formatNumber(spot.crispyness)}/5</span>
+                      <span className="font-semibold">{formatNumber(spot.crispyness)}/10</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1.5">
@@ -116,7 +116,7 @@ export default function Home() {
                         />
                         <span className="text-xs text-gray-500 font-medium">Meat</span>
                       </div>
-                      <span className="font-semibold">{formatNumber(spot.meat)}/5</span>
+                      <span className="font-semibold">{formatNumber(spot.meat)}/10</span>
                     </div>
                   </div>
                 </div>
