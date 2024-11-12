@@ -43,8 +43,8 @@ export default function Rankings() {
                     <p className="text-sm text-gray-600 mt-2 truncate">{spot.address}</p>
                   </div>
                   <div className={`flex items-center gap-2 ml-4 shrink-0 ${
-                    spot.overallRanking < 2.5 ? 'text-red-500' : 
-                    spot.overallRanking >= 4 ? 'text-green-500' : 
+                    spot.overallRanking < 5 ? 'text-red-500' : 
+                    spot.overallRanking >= 8 ? 'text-green-500' : 
                     'text-yellow-500'
                   }`}>
                     <FontAwesomeIcon 
@@ -130,11 +130,11 @@ export default function Rankings() {
                       <td className="px-6 py-4 font-medium">{spot.name}</td>
                       <td className="px-6 py-4 text-gray-600">{spot.address}</td>
                       <td className={`px-6 py-4 text-center font-bold ${
-                        spot.overallRanking < 2.5 ? 'text-red-500' : 
-                        spot.overallRanking >= 4 ? 'text-green-500' : 
+                        spot.overallRanking < 5 ? 'text-red-500' : 
+                        spot.overallRanking >= 8 ? 'text-green-500' : 
                         'text-yellow-500'
                       }`}>
-                        {formatNumber(spot.overallRanking)}/5
+                        {formatNumber(spot.overallRanking)}/10
                       </td>
                       <td className="px-6 py-4 text-center">{formatNumber(spot.sauce)}/5</td>
                       <td className="px-6 py-4 text-center">{formatNumber(spot.crispyness)}/5</td>

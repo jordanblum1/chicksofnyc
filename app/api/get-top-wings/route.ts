@@ -21,9 +21,9 @@ export async function GET() {
       name: record.fields['Spot Name'],
       address: record.fields['Address'],
       overallRanking: record.fields['Overall Ranking'],
-      sauce: record.fields['Sauce (0-5)'],
-      crispyness: record.fields['Crispy-ness (0-5)'],
-      meat: record.fields['Meat (0-5)']
+      sauce: record.fields['Sauce (0-10)'],
+      crispyness: record.fields['Crispy-ness (0-10)'],
+      meat: record.fields['Meat (0-10)']
     }));
 
     return NextResponse.json({ success: true, data: topSpots });

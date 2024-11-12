@@ -11,7 +11,7 @@ interface WingSpot {
 }
 
 // Cache duration in milliseconds (5 minutes)
-const CACHE_DURATION = 5 * 60 * 1000;
+const CACHE_DURATION = 2 * 60 * 1000;
 
 export function useWingSpots(endpoint: string) {
   const [spots, setSpots] = useState<WingSpot[]>([]);
@@ -46,7 +46,7 @@ export function useWingSpots(endpoint: string) {
     if (!lastFetched) {
       fetchSpots();
     }
-  }, [fetchSpots]);
+  }, [fetchSpots, lastFetched]);
 
   // Set up periodic refresh
   useEffect(() => {
