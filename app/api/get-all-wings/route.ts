@@ -9,15 +9,10 @@ Airtable.configure({
 const base = Airtable.base(process.env.AIRTABLE_BASE_ID!);
 
 export async function GET() {
-  const headers = {
-    'Cache-Control': 'no-store, max-age=0',
-    'Content-Type': 'application/json',
-  };
-
   try {
     const records = await base('wing-spots').select({
       sort: [{field: 'Overall Ranking', direction: 'desc'}],
-      filterByFormula: 'NOT({Overall Ranking} = "")'  // Only get spots that have been ranked
+      filterByFormula: 'NOT({Overall Ranking} = "")'
     }).firstPage();
 
     const spots = records.map(record => ({
@@ -30,18 +25,20 @@ export async function GET() {
       meat: record.fields['Meat (0-10)']
     }));
 
-    const response = NextResponse.json(
-      { success: true, data: spots }, 
-      { headers }
+    return Response.json(
+      { success: true, data: spots },
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+          'x-next-cache-tags': 'wings'
+        }
+      }
     );
-    response.headers.set('x-next-cache-tags', '/api/get-all-wings');
-    return response;
-    
   } catch (error) {
     console.error('Airtable fetch error:', error);
-    return NextResponse.json(
+    return Response.json(
       { error: 'Failed to fetch rankings' },
-      { status: 500, headers }
+      { status: 500 }
     );
   }
 } 

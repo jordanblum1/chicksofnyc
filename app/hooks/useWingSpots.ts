@@ -10,46 +10,37 @@ interface WingSpot {
   meat: number;
 }
 
-const CACHE_DURATION = 30 * 60 * 1000;
-
 export function useWingSpots(endpoint: string) {
   const [spots, setSpots] = useState<WingSpot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastFetched, setLastFetched] = useState<number>(0);
 
   const fetchSpots = useCallback(async () => {
-    const now = Date.now();
-    // Don't fetch if the cache is still valid
-    if (lastFetched && now - lastFetched < CACHE_DURATION) {
-      return;
-    }
-
     try {
       setLoading(true);
-      const response = await fetch(endpoint);
+      const response = await fetch(endpoint, {
+        cache: 'no-store',
+        next: { revalidate: 0 }
+      });
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();
       setSpots(data.data);
-      setLastFetched(now);
     } catch (err) {
       setError('Failed to load wing spots');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [endpoint, lastFetched]);
+  }, [endpoint]);
 
-  // Initial fetch
+  // Fetch on mount
   useEffect(() => {
-    if (!lastFetched) {
-      fetchSpots();
-    }
-  }, [fetchSpots, lastFetched]);
+    fetchSpots();
+  }, [fetchSpots]);
 
-  // Set up periodic refresh
+  // Set up periodic refresh (every 30 seconds)
   useEffect(() => {
-    const intervalId = setInterval(fetchSpots, CACHE_DURATION);
+    const intervalId = setInterval(fetchSpots, 30000);
 
     // Refresh on visibility change
     const handleVisibilityChange = () => {
@@ -60,16 +51,11 @@ export function useWingSpots(endpoint: string) {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Cleanup
     return () => {
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [fetchSpots]);
 
-  return {
-    spots,
-    loading,
-    error
-  };
+  return { spots, loading, error, refetch: fetchSpots };
 } 

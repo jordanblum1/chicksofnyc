@@ -63,10 +63,9 @@ export default function AdminPage() {
     
     const refreshPromise = new Promise<string>(async (resolve, reject) => {
       try {
-        await Promise.all([
-          fetch('/api/revalidate?path=/api/get-all-wings'),
-          fetch('/api/revalidate?path=/api/get-top-wings')
-        ]);
+        await fetch('/api/revalidate', {
+          cache: 'no-store'
+        });
         resolve('Rankings refreshed successfully!');
       } catch (error) {
         reject('Failed to refresh rankings');
