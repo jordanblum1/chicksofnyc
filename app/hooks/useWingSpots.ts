@@ -20,6 +20,10 @@ export function useWingSpots(endpoint: string) {
       setLoading(true);
       const response = await fetch(endpoint, {
         cache: 'no-store',
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
         next: { revalidate: 0 }
       });
       if (!response.ok) throw new Error('Failed to fetch');

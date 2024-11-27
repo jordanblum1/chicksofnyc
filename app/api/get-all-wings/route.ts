@@ -8,6 +8,9 @@ Airtable.configure({
 
 const base = Airtable.base(process.env.AIRTABLE_BASE_ID!);
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export async function GET() {
   try {
     const records = await base('wing-spots').select({
@@ -25,18 +28,22 @@ export async function GET() {
       meat: record.fields['Meat (0-10)']
     }));
 
-    return Response.json(
+    return NextResponse.json(
       { success: true, data: spots },
       {
         headers: {
-          'Cache-Control': 'no-store',
+          'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate, s-maxage=1, stale-while-revalidate=1',
+          'CDN-Cache-Control': 'no-cache',
+          'Vercel-CDN-Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0',
           'x-next-cache-tags': 'wings'
         }
       }
     );
   } catch (error) {
     console.error('Airtable fetch error:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to fetch rankings' },
       { status: 500 }
     );
