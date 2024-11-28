@@ -158,10 +158,9 @@ export default function Home() {
               {topSpots.map((spot, index) => (
                 <div 
                   key={spot.id}
-                  className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handleSpotClick(spot)}
+                  className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-semibold">#{index + 1} {spot.name}</h3>
                     <span className={`text-lg font-bold ${
                       spot.overallRanking < 5 ? 'text-red-500' : 
@@ -171,39 +170,39 @@ export default function Home() {
                       {formatNumber(spot.overallRanking)}/10
                     </span>
                   </div>
-                  <p className="text-gray-600 mt-1">{spot.address}</p>
-                  <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
+                  <p className="text-gray-600 text-sm mb-4">{spot.address}</p>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1.5">
                         <FontAwesomeIcon 
                           icon={faDroplet} 
                           className="text-red-500 w-4 h-4"
                           title="Sauce Rating"
                         />
-                        <span className="text-xs text-gray-500 font-medium">Sauce</span>
                       </div>
+                      <span className="text-xs text-gray-500">Sauce</span>
                       <span className="font-semibold">{formatNumber(spot.sauce)}/10</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1.5">
                         <FontAwesomeIcon 
                           icon={faFire} 
                           className="text-orange-500 w-4 h-4"
                           title="Crispy-ness Rating"
                         />
-                        <span className="text-xs text-gray-500 font-medium">Crispy</span>
                       </div>
+                      <span className="text-xs text-gray-500">Crispy</span>
                       <span className="font-semibold">{formatNumber(spot.crispyness)}/10</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-center gap-1">
                       <div className="flex items-center gap-1.5">
                         <FontAwesomeIcon 
                           icon={faDrumstickBite} 
                           className="text-[#8B4513] w-4 h-4"
                           title="Meat Rating"
                         />
-                        <span className="text-xs text-gray-500 font-medium">Meat</span>
                       </div>
+                      <span className="text-xs text-gray-500">Meat</span>
                       <span className="font-semibold">{formatNumber(spot.meat)}/10</span>
                     </div>
                   </div>

@@ -59,6 +59,33 @@ export default function Rankings() {
     setSelectedPhoto(photos[newIndex]);
   }, [selectedPhotoIndex, photos]);
 
+  // Add touch handling for swipe
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      handlePhotoNavigation('next');
+    } else if (isRightSwipe) {
+      handlePhotoNavigation('prev');
+    }
+  };
+
   // Add keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -104,7 +131,7 @@ export default function Rankings() {
                 className="bg-white p-4 sm:p-6 rounded-lg shadow-md w-full cursor-pointer hover:shadow-lg transition-shadow"
                 onClick={() => setSelectedSpot(spot)}
               >
-                <div className="flex justify-between items-start mb-3">
+                <div className="flex justify-between items-start mb-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold shrink-0">#{index + 1}</span>
@@ -125,30 +152,30 @@ export default function Rankings() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-3 gap-2 mt-4 text-sm">
-                  <div className="flex items-center gap-1">
+                <div className="grid grid-cols-3 gap-4 mt-4">
+                  <div className="flex flex-col items-center gap-1">
                     <FontAwesomeIcon 
                       icon={faDroplet} 
                       className="text-red-500 w-4 h-4 shrink-0"
                     />
                     <span className="text-xs text-gray-500">Sauce</span>
-                    <span className="font-semibold ml-1">{formatNumber(spot.sauce)}/10</span>
+                    <span className="font-semibold">{formatNumber(spot.sauce)}/10</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-col items-center gap-1">
                     <FontAwesomeIcon 
                       icon={faFire} 
                       className="text-orange-500 w-4 h-4 shrink-0"
                     />
                     <span className="text-xs text-gray-500">Crispy</span>
-                    <span className="font-semibold ml-1">{formatNumber(spot.crispyness)}/10</span>
+                    <span className="font-semibold">{formatNumber(spot.crispyness)}/10</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-col items-center gap-1">
                     <FontAwesomeIcon 
                       icon={faDrumstickBite} 
                       className="text-[#8B4513] w-4 h-4 shrink-0"
                     />
                     <span className="text-xs text-gray-500">Meat</span>
-                    <span className="font-semibold ml-1">{formatNumber(spot.meat)}/10</span>
+                    <span className="font-semibold">{formatNumber(spot.meat)}/10</span>
                   </div>
                 </div>
               </div>
@@ -287,14 +314,19 @@ export default function Rankings() {
         isPhotoModal={true}
       >
         <div className="p-4">
-          <div className="relative max-h-[80vh] flex items-center justify-center">
-            {/* Previous Button */}
+          <div 
+            className="relative max-h-[80vh] flex items-center justify-center"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Previous Button - only show on desktop */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handlePhotoNavigation('prev');
               }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-opacity"
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-opacity hidden md:block"
               aria-label="Previous photo"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,15 +338,16 @@ export default function Rankings() {
               src={selectedPhoto || ''}
               alt="Large view"
               className="max-w-full max-h-[80vh] object-contain"
+              draggable={false}
             />
 
-            {/* Next Button */}
+            {/* Next Button - only show on desktop */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handlePhotoNavigation('next');
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-opacity"
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-opacity hidden md:block"
               aria-label="Next photo"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
