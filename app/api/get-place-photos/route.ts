@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+interface PlacePhoto {
+  photo_reference: string;
+}
+
 // Use the server-side API key for Places API
 const PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
@@ -29,10 +33,8 @@ async function getPhotoUrl(photoReference: string): Promise<string | null> {
   try {
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/place/photo?maxheight=400&photo_reference=${photoReference}&key=${PLACES_API_KEY}`,
-      { redirect: 'manual' } // Don't follow redirects
+      { redirect: 'manual' }
     );
-    
-    // Google Photos API returns a 302 redirect to the actual photo URL
     return response.headers.get('location');
   } catch (error) {
     console.error('Error fetching photo:', error);
@@ -70,12 +72,11 @@ export async function GET(request: Request) {
     const photos = await getPlaceDetails(placeId);
     console.log('Found photos:', photos.length);
 
-    // Get actual photo URLs
-    const photoPromises = photos
-      .slice(0, 5)
-      .map(photo => getPhotoUrl(photo.photo_reference));
-    
-    const photoUrls = (await Promise.all(photoPromises)).filter(url => url !== null) as string[];
+    const photoUrls = await Promise.all(
+      photos
+        .slice(0, 5)
+        .map((photo: PlacePhoto) => getPhotoUrl(photo.photo_reference))
+    ).then(urls => urls.filter((url): url is string => url !== null));
 
     console.log('Generated photo URLs:', photoUrls.length);
 
