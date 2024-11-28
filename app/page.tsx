@@ -158,7 +158,8 @@ export default function Home() {
               {topSpots.map((spot, index) => (
                 <div 
                   key={spot.id}
-                  className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+                  className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => setSelectedSpot(spot)}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-semibold">#{index + 1} {spot.name}</h3>
