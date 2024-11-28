@@ -31,6 +31,7 @@ export default function Home() {
   const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number>(-1);
+  const [spotPhotos, setSpotPhotos] = useState<Record<string, string[]>>({});
 
   const handleClosePhoto = () => {
     setSelectedPhoto(null);
@@ -135,6 +136,33 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedPhoto, handlePhotoNavigation]);
 
+  // Function to fetch photos for a spot
+  const fetchSpotPhotos = async (spot: any) => {
+    try {
+      const response = await fetch(
+        `/api/get-place-photos?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`
+      );
+      const data = await response.json();
+      if (data.photos) {
+        setSpotPhotos(prev => ({
+          ...prev,
+          [spot.id]: data.photos
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching spot photos:', error);
+    }
+  };
+
+  // Fetch photos for all spots when they load
+  useEffect(() => {
+    if (topSpots.length > 0) {
+      topSpots.forEach(spot => {
+        fetchSpotPhotos(spot);
+      });
+    }
+  }, [topSpots]);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4" style={{ paddingTop: '64px' }}>
       <MenuBar />
@@ -158,10 +186,9 @@ export default function Home() {
               {topSpots.map((spot, index) => (
                 <div 
                   key={spot.id}
-                  className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handleSpotClick(spot)}
+                  className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-2">
                     <h3 className="text-xl font-semibold">#{index + 1} {spot.name}</h3>
                     <span className={`text-lg font-bold ${
                       spot.overallRanking < 5 ? 'text-red-500' : 
@@ -171,8 +198,45 @@ export default function Home() {
                       {formatNumber(spot.overallRanking)}/10
                     </span>
                   </div>
-                  <p className="text-gray-600 mt-1">{spot.address}</p>
-                  <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
+                  <p className="text-gray-600 text-sm mb-3">{spot.address}</p>
+
+                  {/* Photo Preview Section */}
+                  {spotPhotos[spot.id] && spotPhotos[spot.id].length > 0 && (
+                    <div className="mb-3">
+                      <div className="grid grid-cols-3 gap-2 h-24">
+                        {spotPhotos[spot.id].slice(0, 3).map((photo, photoIndex) => (
+                          <div 
+                            key={photoIndex}
+                            className="relative aspect-w-16 aspect-h-9 bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
+                            onClick={() => {
+                              setSelectedSpot(spot);
+                              setSelectedPhoto(photo);
+                              setSelectedPhotoIndex(photoIndex);
+                              // Fetch all photos for this spot if not already loaded
+                              if (!photos.length) {
+                                fetchSpotPhotos(spot);
+                              }
+                            }}
+                          >
+                            <img
+                              src={photo}
+                              alt={`${spot.name} preview ${photoIndex + 1}`}
+                              className="object-cover w-full h-full hover:opacity-90 transition-opacity"
+                            />
+                            {photoIndex === 2 && spotPhotos[spot.id].length > 3 && (
+                              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                <span className="text-white text-sm font-medium">
+                                  +{spotPhotos[spot.id].length - 3}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-4 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1.5">
                         <FontAwesomeIcon 
