@@ -59,6 +59,24 @@ export default function Rankings() {
     setSelectedPhoto(photos[newIndex]);
   }, [selectedPhotoIndex, photos]);
 
+  // Add keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedPhoto) return;
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handlePhotoNavigation('prev');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handlePhotoNavigation('next');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPhoto, handlePhotoNavigation]);
+
   return (
     <div className="min-h-screen bg-[#FFF8EB] flex flex-col overflow-x-hidden">
       <MenuBar />
