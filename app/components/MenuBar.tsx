@@ -66,13 +66,13 @@ export default function MenuBar() {
 
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-primary shadow-lg sm:hidden">
+          <div className="absolute top-full left-0 right-0 bg-[#5D4037]/95 backdrop-blur-sm shadow-lg sm:hidden">
             <div className="py-2">
               {navItems.map((item) => (
                 <Link 
                   key={item.href}
                   href={item.href} 
-                  className="block px-4 py-2 text-white hover:bg-primary-dark transition-colors duration-300"
+                  className="block px-4 py-3 text-white font-bold hover:bg-[#5D4037]/90 active:bg-[#5D4037] transition-colors duration-300"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {item.label}
