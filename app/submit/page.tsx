@@ -1,151 +1,118 @@
 'use client';
-import { useState } from 'react';
 import MenuBar from '../components/MenuBar';
-import dynamic from 'next/dynamic';
-
-// Dynamic import with no SSR
-const SuccessAnimation = dynamic(() => import('../components/SuccessAnimation'), {
-  ssr: false,
-});
+import { useState } from 'react';
 
 export default function Submit() {
-  const [formState, setFormState] = useState({
-    placeName: '',
+  const [formData, setFormData] = useState({
+    name: '',
     address: '',
-    additionalComments: '',
-    email: ''
+    comments: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [showAnimation, setShowAnimation] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormState(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+    setSubmitStatus('idle');
+
     try {
-      const response = await fetch('/api/submit-wing-spot', {
+      const response = await fetch('/api/submit-spot', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formState)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
-        setSubmitSuccess(true);
-        setShowAnimation(true);
-        setFormState({ placeName: '', address: '', additionalComments: '', email: '' });
-        setTimeout(() => setShowAnimation(false), 2000);
-      } else {
-        throw new Error('Submission failed');
-      }
+      if (!response.ok) throw new Error('Failed to submit');
+      
+      setSubmitStatus('success');
+      setFormData({ name: '', address: '', comments: '' });
     } catch (error) {
-      alert('Failed to submit. Please try again.');
+      console.error('Submit error:', error);
+      setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="page-content bg-[#FFF8EB] min-h-screen">
+    <div className="page-container">
       <MenuBar />
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <section className="hero text-center py-16 rounded-2xl bg-gradient-to-r from-[#5D4037] to-[#4E342E] text-white mb-12">
-          <h1 className="text-5xl font-bold mb-4">Submit a Wing Spot</h1>
-          <p className="text-xl text-[#FFF8EB] opacity-90">Help Us Find NYC's Best Wings</p>
+      <div className="content-container fade-in">
+        <section className="card page-header p-8 mb-8">
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold text-white font-heading">Submit a Wing Spot</h1>
+            <p className="text-white/90 mt-2 text-lg">Know a great wing spot? Let us know and we'll check it out!</p>
+          </div>
         </section>
 
-        <section className="form-section bg-white rounded-lg p-8 shadow-md">
-          {submitSuccess ? (
-            <div className="p-4 bg-green-100 text-green-700 rounded-lg mb-6">
-              Thanks for your suggestion! We'll check it out soon.
+        <div className="card p-8 slide-up">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                Spot Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                required
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g. Wing Heaven"
+              />
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="placeName" className="block text-gray-700 font-medium mb-2">
-                  Place Name
-                </label>
-                <input
-                  type="text"
-                  id="placeName"
-                  name="placeName"
-                  value={formState.placeName}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5D4037] focus:border-transparent transition duration-200"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="address" className="block text-gray-700 font-medium mb-2">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  id="address"
-                  name="address"
-                  value={formState.address}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5D4037] focus:border-transparent transition duration-200"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="additionalComments" className="block text-gray-700 font-medium mb-2">
-                  Additional Comments
-                </label>
-                <textarea
-                  id="additionalComments"
-                  name="additionalComments"
-                  value={formState.additionalComments}
-                  onChange={handleChange}
-                  rows={4}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5D4037] focus:border-transparent transition duration-200"
-                />
-              </div>
-              <div>
-                <label htmlFor="email" className="block text-gray-700 font-medium mb-2">
-                  Email (optional)
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formState.email}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#5D4037] focus:border-transparent transition duration-200"
-                />
-              </div>
 
-              <div className="flex gap-4">
-                <button 
-                  type="submit" 
-                  className="btn btn-primary"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
-                </button>
-                
-                <button 
-                  type="button" 
-                  className="btn btn-outline"
-                  onClick={() => {
-                    setFormState({placeName: '', address: '', additionalComments: '', email: ''});
-                  }}
-                >
-                  Clear Form
-                </button>
-              </div>
-            </form>
-          )}
-        </section>
+            <div>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                Address
+              </label>
+              <input
+                type="text"
+                id="address"
+                required
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                value={formData.address}
+                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="e.g. 123 Wing Street, New York, NY"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="comments" className="block text-sm font-medium text-gray-700 mb-1">
+                Comments
+              </label>
+              <textarea
+                id="comments"
+                rows={4}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                value={formData.comments}
+                onChange={(e) => setFormData(prev => ({ ...prev, comments: e.target.value }))}
+                placeholder="Tell us what makes their wings special..."
+              />
+            </div>
+
+            <div className="flex items-center gap-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`btn btn-primary ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Wing Spot'}
+              </button>
+
+              {submitStatus === 'success' && (
+                <p className="text-green-600">Thanks for the submission! We'll check it out!</p>
+              )}
+              {submitStatus === 'error' && (
+                <p className="text-red-500">Something went wrong. Please try again.</p>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
-
-      {showAnimation && <SuccessAnimation onComplete={() => setShowAnimation(false)} />}
     </div>
   );
 } 

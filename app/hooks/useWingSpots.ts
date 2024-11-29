@@ -37,28 +37,9 @@ export function useWingSpots(endpoint: string) {
     }
   }, [endpoint]);
 
-  // Fetch on mount
+  // Fetch only on mount
   useEffect(() => {
     fetchSpots();
-  }, [fetchSpots]);
-
-  // Set up periodic refresh (every 30 seconds)
-  useEffect(() => {
-    const intervalId = setInterval(fetchSpots, 30000);
-
-    // Refresh on visibility change
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchSpots();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      clearInterval(intervalId);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
   }, [fetchSpots]);
 
   return { spots, loading, error, refetch: fetchSpots };

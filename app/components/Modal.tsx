@@ -6,9 +6,10 @@ interface ModalProps {
   children: React.ReactNode;
   isPhotoModal?: boolean;
   onEscape?: () => void;
+  title?: string;
 }
 
-export default function Modal({ isOpen, onClose, children, isPhotoModal = false, onEscape }: ModalProps) {
+export default function Modal({ isOpen, onClose, children, isPhotoModal = false, onEscape, title }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

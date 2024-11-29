@@ -1,116 +1,87 @@
-import * as React from 'react';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import CssBaseline from '@mui/material/CssBaseline';
-import Drawer from '@mui/material/Drawer';
-import IconButton from '@mui/material/IconButton';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import MenuIcon from '@mui/icons-material/Menu';
-import Toolbar from '@mui/material/Toolbar';
-import Button from '@mui/material/Button';
+'use client';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
 
-const drawerWidth = 240;
 const navItems = [
-  {name: 'Home', link: '/'}, 
-  {name: 'Rankings', link: '/rankings'},
-  {name: 'About', link: '/about'},
-  {name: 'Submit a Spot', link: '/submit'}
+  { href: '/', label: 'Home' },
+  { href: '/rankings', label: 'Rankings' },
+  { href: '/about', label: 'About' },
+  { href: '/submit', label: 'Submit a Spot' }
 ];
 
 export default function MenuBar() {
-    const [isOpen, setIsOpen] = useState(false);
-    const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  useEffect(() => {
     const handleScroll = () => {
-        const position = window.pageYOffset;
-        setIsScrolled(position > 0);
+      setIsScrolled(window.scrollY > 10);
     };
 
-    React.useEffect(() => {
-        window.addEventListener('scroll', handleScroll);
-        return () => {
-            window.removeEventListener('scroll', handleScroll);
-        };
-    }, []);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-    const drawer = (
-        <Box onClick={() => setIsOpen(false)} className="mobile-drawer">
-            <div className="drawer-logo">
-                <Image
-                    src="/chicks-of-nyc-logo.png"
-                    alt="Logo"
-                    width={100}
-                    height={100}
-                    className="logo-image"
-                />
-            </div>
-            <List>
-                {navItems.map((item) => (
-                    <ListItem key={item.name} disablePadding>
-                        <ListItemButton className="drawer-item">
-                            <Link href={item.link}><ListItemText primary={item.name} /></Link>
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-            </List>
-        </Box>
-    );
+  return (
+    <nav className={`fixed top-0 left-0 right-0 z-50 navbar ${isScrolled ? 'shadow-lg' : ''}`}>
+      <div className="navbar-content">
+        <Link href="/" className="navbar-logo">
+          <Image
+            src="/chicks-of-nyc-logo.png"
+            alt="NYC Chicks Logo"
+            width={50}
+            height={50}
+            className="hover:scale-105 transition-transform duration-300"
+          />
+        </Link>
 
-    return (
-        <Box sx={{ display: 'flex' }}>
-            <CssBaseline />
-            <AppBar component="nav" className={`navbar fixed ${isScrolled ? 'scrolled' : ''}`}>
-                <Toolbar className="navbar-content">
-                    <div className="navbar-logo">
-                        <Link href="/">
-                            <Image
-                                src="/chicks-of-nyc-logo.png"
-                                alt="NYC Chicks Logo"
-                                width={50}
-                                height={50}
-                                className="logo-image"
-                            />
-                        </Link>
-                    </div>
-                    
-                    <div className="desktop-menu">
-                        <Link href="/" className="nav-button">
-                            Home
-                        </Link>
-                        <Link href="/rankings" className="nav-button">
-                            Rankings
-                        </Link>
-                        <Link href="/about" className="nav-button">
-                            About
-                        </Link>
-                        <Link href="/submit" className="nav-button">
-                            Submit a Wing Spot
-                        </Link>
-                    </div>
+        {/* Desktop Menu */}
+        <div className="hidden sm:flex items-center gap-6">
+          {navItems.map((item) => (
+            <Link 
+              key={item.href}
+              href={item.href} 
+              className="text-white hover:text-accent transition-colors duration-300"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
 
-                    <IconButton
-                        className="mobile-menu-button"
-                        onClick={() => setIsOpen(true)}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                </Toolbar>
-            </AppBar>
-            <nav>
-                <Drawer
-                    anchor="right"
-                    open={isOpen}
-                    onClose={() => setIsOpen(false)}
+        {/* Mobile Menu Button */}
+        <button
+          className="sm:hidden text-white p-2 hover:text-accent transition-colors duration-300"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+            />
+          </svg>
+        </button>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-primary shadow-lg sm:hidden">
+            <div className="py-2">
+              {navItems.map((item) => (
+                <Link 
+                  key={item.href}
+                  href={item.href} 
+                  className="block px-4 py-2 text-white hover:bg-primary-dark transition-colors duration-300"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
-                    {drawer}
-                </Drawer>
-            </nav>
-        </Box>
-    );
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
 }

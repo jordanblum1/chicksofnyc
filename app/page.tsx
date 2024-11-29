@@ -138,115 +138,115 @@ export default function Home() {
   }, [selectedPhoto, handlePhotoNavigation]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4" style={{ paddingTop: '64px' }}>
+    <div className="page-container">
       <MenuBar />
-      <div className="flex flex-col items-center mb-8">
-        <Image
-          src="/chicks-of-nyc-logo.png"
-          alt="NYC Chicks Logo"
-          width={400}
-          height={400}
-          priority
-        />
-      </div>
-
-      <div className="w-full max-w-7xl flex flex-col md:flex-row gap-8">
-        <div className="w-full md:w-1/2">
-          <h2 className="text-2xl font-bold mb-4">Top Wing Spots</h2>
-          {loading && <p className="text-center">Loading top spots...</p>}
-          {error && <p className="text-center text-red-500">{error}</p>}
-          {topSpots.length > 0 && (
-            <div className="space-y-4">
-              {topSpots.map((spot, index) => (
-                <div 
-                  key={spot.id}
-                  className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => setSelectedSpot(spot)}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold">#{index + 1} {spot.name}</h3>
-                    <span className={`text-lg font-bold ${
-                      spot.overallRanking < 5 ? 'text-red-500' : 
-                      spot.overallRanking >= 8 ? 'text-green-500' : 
-                      'text-yellow-500'
-                    }`}>
-                      {formatNumber(spot.overallRanking)}/10
-                    </span>
-                  </div>
-                  <p className="text-gray-600 text-sm mb-4">{spot.address}</p>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="flex items-center gap-1.5">
-                        <FontAwesomeIcon 
-                          icon={faDroplet} 
-                          className="text-red-500 w-4 h-4"
-                          title="Sauce Rating"
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500">Sauce</span>
-                      <span className="font-semibold">{formatNumber(spot.sauce)}/10</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="flex items-center gap-1.5">
-                        <FontAwesomeIcon 
-                          icon={faFire} 
-                          className="text-orange-500 w-4 h-4"
-                          title="Crispy-ness Rating"
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500">Crispy</span>
-                      <span className="font-semibold">{formatNumber(spot.crispyness)}/10</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1">
-                      <div className="flex items-center gap-1.5">
-                        <FontAwesomeIcon 
-                          icon={faDrumstickBite} 
-                          className="text-[#8B4513] w-4 h-4"
-                          title="Meat Rating"
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500">Meat</span>
-                      <span className="font-semibold">{formatNumber(spot.meat)}/10</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+      <div className="content-container fade-in">
+        <div className="flex flex-col items-center mb-8">
+          <Image
+            src="/chicks-of-nyc-logo.png"
+            alt="NYC Chicks Logo"
+            width={400}
+            height={400}
+            priority
+            className="hover:scale-105 transition-transform duration-300"
+          />
         </div>
 
-        <div className="w-full md:w-1/2">
-          <h2 className="text-2xl font-bold mb-4 invisible">Spacer</h2>
-          <blockquote 
-            className="instagram-media h-full" 
-            data-instgrm-permalink="https://www.instagram.com/chicksofnewyorkcity/"
-            data-instgrm-version="14"
-            style={{ 
-              background: '#FFF',
-              border: '0',
-              borderRadius: '3px',
-              boxShadow: '0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)',
-              margin: '1px',
-              maxWidth: '100%',
-              minWidth: '326px',
-              padding: '0',
-              width: '99.375%',
-              height: '93%'
-            }}
-          ></blockquote>
-        </div>
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="slide-up">
+            <h2 className="text-2xl font-bold mb-4 text-primary">Top Wing Spots</h2>
+            {loading && <p className="text-center">Loading top spots...</p>}
+            {error && <p className="text-center text-red-500">{error}</p>}
+            {topSpots.length > 0 && (
+              <div className="space-y-4">
+                {topSpots.map((spot, index) => (
+                  <div 
+                    key={spot.id}
+                    className="card p-4 hover:cursor-pointer"
+                    onClick={() => setSelectedSpot(spot)}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-semibold">#{index + 1} {spot.name}</h3>
+                      <span className={`text-lg font-bold ${
+                        spot.overallRanking < 5 ? 'text-red-500' : 
+                        spot.overallRanking >= 8 ? 'text-green-500' : 
+                        'text-yellow-500'
+                      }`}>
+                        {formatNumber(spot.overallRanking)}/10
+                      </span>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-4">{spot.address}</p>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <FontAwesomeIcon 
+                            icon={faDroplet} 
+                            className="icon-sauce w-5 h-5"
+                            title="Sauce Rating"
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500">Sauce</span>
+                        <span className="font-semibold text-secondary">{formatNumber(spot.sauce)}/10</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <FontAwesomeIcon 
+                            icon={faFire} 
+                            className="icon-crispy w-5 h-5"
+                            title="Crispy-ness Rating"
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500">Crispy</span>
+                        <span className="font-semibold text-accent">{formatNumber(spot.crispyness)}/10</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <FontAwesomeIcon 
+                            icon={faDrumstickBite} 
+                            className="icon-meat w-5 h-5"
+                            title="Meat Rating"
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500">Meat</span>
+                        <span className="font-semibold text-primary-light">{formatNumber(spot.meat)}/10</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-      <div className="w-full max-w-7xl mt-8">
-        <iframe
-          src="https://www.google.com/maps/d/u/0/embed?mid=13UCUpt_uJToGhcRjSQltSAbXV9zNDWg&ehbc=2E312F"
-          width="640"
-          height="480"
-          style={{ border: 0 }}
-          allowFullScreen={false}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        ></iframe>
+          <div className="slide-up">
+            <h2 className="text-2xl font-bold mb-4 invisible">Spacer</h2>
+            <blockquote 
+              className="instagram-media card h-full" 
+              data-instgrm-permalink="https://www.instagram.com/chicksofnewyorkcity/"
+              data-instgrm-version="14"
+              style={{ 
+                border: '0',
+                margin: '1px',
+                maxWidth: '100%',
+                minWidth: '326px',
+                padding: '0',
+                width: '99.375%',
+                height: '93%'
+              }}
+            ></blockquote>
+          </div>
+        </div>
+
+        <div className="mt-8 card p-4 slide-up">
+          <iframe
+            src="https://www.google.com/maps/d/u/0/embed?mid=13UCUpt_uJToGhcRjSQltSAbXV9zNDWg&ehbc=2E312F"
+            width="100%"
+            height="480"
+            style={{ border: 0, borderRadius: '0.5rem' }}
+            allowFullScreen={false}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          ></iframe>
+        </div>
       </div>
 
       {/* Photo Viewer Modal */}
@@ -395,6 +395,6 @@ export default function Home() {
           </div>
         )}
       </Modal>
-    </main>
+    </div>
   );
 }
