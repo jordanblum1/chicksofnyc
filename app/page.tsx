@@ -3,6 +3,8 @@ import { useWingSpots } from "./hooks/useWingSpots";
 import Image from "next/image";
 import MenuBar from "./components/MenuBar";
 import Modal from "./components/Modal";
+import Lottie from "lottie-react";
+import wingAnimation from "./animations/wings.json";
 import { formatNumber } from "./utils/formatNumber";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDroplet, faFire, faDrumstickBite } from '@fortawesome/free-solid-svg-icons';
@@ -256,15 +258,15 @@ export default function Home() {
         }}
         isPhotoModal={true}
       >
-        <div className="p-4">
-          <div className="relative max-h-[80vh] flex items-center justify-center">
+        <div className="p-2 md:p-0">
+          <div className="relative flex items-center justify-center min-h-[50vh] md:min-h-[75vh]">
             {/* Previous Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handlePhotoNavigation('prev');
               }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-opacity"
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-opacity hidden md:block z-10"
               aria-label="Previous photo"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,8 +276,8 @@ export default function Home() {
 
             <img
               src={selectedPhoto || ''}
-              alt={`Photo ${selectedPhotoIndex + 1} of ${photos.length}`}
-              className="max-w-full max-h-[80vh] object-contain"
+              alt="Large view"
+              className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
             />
 
             {/* Next Button */}
@@ -284,7 +286,7 @@ export default function Home() {
                 e.stopPropagation();
                 handlePhotoNavigation('next');
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-opacity"
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-opacity hidden md:block z-10"
               aria-label="Next photo"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,53 +324,64 @@ export default function Home() {
         }}
       >
         {selectedSpot && (
-          <div className="p-4 space-y-4">
-            <h2 className="text-xl font-bold">{selectedSpot.name}</h2>
-            <p className="text-gray-600 text-sm">{selectedSpot.address}</p>
+          <div className="p-6 space-y-6">
+            <div className="flex items-center gap-3 animate-fade-in">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-deep-orange-500 to-deep-orange-400 bg-clip-text text-transparent">
+                {selectedSpot.name}
+              </h2>
+              <div className="animate-wing-flap">
+                🍗
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm flex items-center animate-fade-in">
+              <svg className="w-4 h-4 mr-1 text-deep-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {selectedSpot.address}
+            </p>
             
             {/* Photos Section */}
             {loadingPhotos ? (
               <div className="h-32 flex items-center justify-center">
-                <div className="animate-pulse text-gray-500">Loading photos...</div>
+                <div className="w-24 h-24">
+                  <Lottie animationData={wingAnimation} loop={true} />
+                </div>
               </div>
             ) : photos.length > 0 ? (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Photos</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <div className="animate-slide-in-right">
+                <h3 className="text-lg font-semibold mb-3 text-deep-orange-500 flex items-center gap-2">
+                  Photos
+                  <span className="animate-wing-flap text-sm">🍗</span>
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                   {photos.map((photo, index) => (
                     <div 
                       key={index} 
-                      className="relative aspect-w-16 aspect-h-9 bg-gray-100 rounded-lg overflow-hidden cursor-pointer group"
-                      onClick={() => handlePhotoClick(photo, index)}
+                      className="relative aspect-w-16 aspect-h-9 group cursor-pointer 
+                               overflow-hidden rounded-lg border-4 border-deep-orange-100 
+                               hover:border-deep-orange-300 transition-all duration-300
+                               shadow-md hover:shadow-xl animate-border-pulse
+                               md:aspect-w-4 md:aspect-h-3"
+                      onClick={() => {
+                        setSelectedPhoto(photo);
+                        setSelectedPhotoIndex(index);
+                      }}
                     >
                       <img
                         src={photo}
                         alt={`${selectedSpot.name} photo ${index + 1}`}
-                        className="object-cover w-full h-full group-hover:opacity-90 transition-opacity"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null;
-                          target.src = '/placeholder-image.jpg';
-                          target.className = 'object-cover w-full h-full opacity-50';
-                        }}
+                        className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center">
-                        <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm">
-                          View larger
-                        </span>
-                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   ))}
                 </div>
               </div>
-            ) : (
-              <div className="h-16 flex items-center justify-center text-gray-500 text-sm">
-                No photos available for this location
-              </div>
-            )}
+            ) : null}
 
             {/* Google Maps iframe */}
-            <div>
+            <div className="rounded-lg overflow-hidden border-4 border-deep-orange-100 shadow-lg animate-fade-in hover:border-deep-orange-200 transition-colors duration-300">
               <iframe
                 width="100%"
                 height="350"
