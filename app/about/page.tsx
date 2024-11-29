@@ -1,8 +1,11 @@
 'use client';
 import MenuBar from '../components/MenuBar';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDroplet, faFire, faDrumstickBite } from '@fortawesome/free-solid-svg-icons';
+
+const WING_EMOJIS = Array(8).fill('🍗');
 
 export default function About() {
   return (
@@ -17,11 +20,42 @@ export default function About() {
         </section>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <section className="card p-8 slide-up">
-            <h2 className="text-2xl font-semibold mb-6 text-primary">Our Mission</h2>
+          <section className="card p-8 slide-up overflow-hidden">
+            <h2 className="text-2xl font-semibold mb-6 text-primary flex items-center gap-2">
+            <span className="animate-wing-flap inline-block">🍗</span>
+              The Plan?
+              <span className="animate-wing-flap inline-block">🍗</span>
+            </h2>
+            
+            <div className="relative mb-6 group">
+              <Image
+                src="/theplan.jpg"
+                alt="The master plan"
+                width={600}
+                height={400}
+                className="rounded-lg shadow-lg transition-transform duration-300 group-hover:scale-[1.02]"
+              />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="flex flex-wrap justify-center gap-4 p-4">
+                  {WING_EMOJIS.map((emoji, index) => (
+                    <span
+                      key={index}
+                      className="text-3xl animate-wing-flap"
+                      style={{
+                        animationDelay: `${index * 0.1}s`,
+                        transform: `rotate(${Math.random() * 360}deg)`,
+                      }}
+                    >
+                      {emoji}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-4">
-              <p className="text-lg leading-relaxed text-gray-700">
-                I'm Jordan and I love a good chicken wing. I'm on a mission to find the best wings in NYC. Despite being so close to Buffalo it's been surprisingly difficult.
+              <p className="text-lg leading-relaxed text-gray-700 font-medium">
+                Create a chicken wing reviewer personality to eventually get paid to eat chicken wings.
               </p>
               <p className="text-lg leading-relaxed text-gray-700">
                 That's why I'm asking for your help. If you know of a place that has great wings, please visit our{' '}
@@ -46,28 +80,40 @@ export default function About() {
           </section>
 
           <section className="card p-8 slide-up" style={{ animationDelay: '0.2s' }}>
-            <h2 className="text-2xl font-semibold mb-6 text-primary">Rating System</h2>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <FontAwesomeIcon icon={faDroplet} className="icon-sauce w-6 h-6" />
-                <div>
-                  <h3 className="font-medium text-primary">Sauce (0-10)</h3>
-                  <p className="text-gray-600">Flavor, consistency, and uniqueness</p>
+            <h2 className="text-2xl font-semibold mb-8 text-primary flex items-center gap-2">
+              Rating System
+              <span className="animate-bounce inline-block">📊</span>
+            </h2>
+            <div className="space-y-8">
+              <div className="p-6 rounded-xl hover:bg-primary/5 transition-colors duration-300 border border-primary/10">
+                <div className="flex items-center gap-4 mb-3">
+                  <FontAwesomeIcon icon={faDroplet} className="icon-sauce w-8 h-8" />
+                  <h3 className="font-medium text-xl text-primary">Sauce (0-10)</h3>
                 </div>
+                <p className="text-gray-600 text-lg">Flavor, consistency, and uniqueness</p>
               </div>
-              <div className="flex items-center gap-3">
-                <FontAwesomeIcon icon={faFire} className="icon-crispy w-6 h-6" />
-                <div>
-                  <h3 className="font-medium text-primary">Crispy-ness (0-10)</h3>
-                  <p className="text-gray-600">Texture and cooking perfection</p>
+              
+              <div className="p-6 rounded-xl hover:bg-primary/5 transition-colors duration-300 border border-primary/10">
+                <div className="flex items-center gap-4 mb-3">
+                  <FontAwesomeIcon icon={faFire} className="icon-crispy w-8 h-8" />
+                  <h3 className="font-medium text-xl text-primary">Crispy-ness (0-10)</h3>
                 </div>
+                <p className="text-gray-600 text-lg">Texture and cooking perfection</p>
               </div>
-              <div className="flex items-center gap-3">
-                <FontAwesomeIcon icon={faDrumstickBite} className="icon-meat w-6 h-6" />
-                <div>
-                  <h3 className="font-medium text-primary">Meat Quality (0-10)</h3>
-                  <p className="text-gray-600">Size, tenderness, and juiciness</p>
+              
+              <div className="p-6 rounded-xl hover:bg-primary/5 transition-colors duration-300 border border-primary/10">
+                <div className="flex items-center gap-4 mb-3">
+                  <FontAwesomeIcon icon={faDrumstickBite} className="icon-meat w-8 h-8" />
+                  <h3 className="font-medium text-xl text-primary">Meat Quality (0-10)</h3>
                 </div>
+                <p className="text-gray-600 text-lg">Size, tenderness, and juiciness</p>
+              </div>
+
+              <div className="mt-8 p-4 bg-accent/10 rounded-xl">
+                <p className="text-gray-700 text-center italic">
+                  Honorable mentions might be added for ranch/blue cheese 
+                  <span className="inline-block ml-2 animate-bounce">🥡</span>
+                </p>
               </div>
             </div>
           </section>
