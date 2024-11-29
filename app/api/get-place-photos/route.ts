@@ -7,12 +7,18 @@ interface PlacePhoto {
 // Use the server-side API key for Places API
 const PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
+// 12 hours in seconds
+const CACHE_MAX_AGE = 60 * 60 * 12;
+
+export const revalidate = CACHE_MAX_AGE;
+
 async function getPlaceId(query: string) {
   console.log('Searching for place:', query);
   const response = await fetch(
     `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(
       query
-    )}&inputtype=textquery&fields=place_id&key=${PLACES_API_KEY}`
+    )}&inputtype=textquery&fields=place_id&key=${PLACES_API_KEY}`,
+    { next: { revalidate: CACHE_MAX_AGE } }
   );
   const data = await response.json();
   console.log('Place search response:', data);
@@ -22,7 +28,8 @@ async function getPlaceId(query: string) {
 async function getPlaceDetails(placeId: string) {
   console.log('Fetching details for place ID:', placeId);
   const response = await fetch(
-    `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=photos&key=${PLACES_API_KEY}`
+    `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=photos&key=${PLACES_API_KEY}`,
+    { next: { revalidate: CACHE_MAX_AGE } }
   );
   const data = await response.json();
   console.log('Place details response:', data);
@@ -33,7 +40,7 @@ async function getPhotoUrl(photoReference: string): Promise<string | null> {
   try {
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/place/photo?maxheight=400&photo_reference=${photoReference}&key=${PLACES_API_KEY}`,
-      { redirect: 'manual' }
+      { redirect: 'manual', next: { revalidate: CACHE_MAX_AGE } }
     );
     return response.headers.get('location');
   } catch (error) {
@@ -80,7 +87,16 @@ export async function GET(request: Request) {
 
     console.log('Generated photo URLs:', photoUrls.length);
 
-    return NextResponse.json({ photos: photoUrls });
+    return NextResponse.json(
+      { photos: photoUrls },
+      {
+        headers: {
+          'Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate`,
+          'CDN-Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}`,
+          'Vercel-CDN-Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}`,
+        }
+      }
+    );
   } catch (error) {
     console.error('Error fetching place photos:', error);
     return NextResponse.json(

@@ -69,6 +69,9 @@ export default function Home() {
   }, [selectedSpot]);
 
   useEffect(() => {
+    // Check if we're in the browser
+    if (typeof window === 'undefined') return;
+
     // Load Instagram embed script
     const script = document.createElement('script');
     script.src = '//www.instagram.com/embed.js';

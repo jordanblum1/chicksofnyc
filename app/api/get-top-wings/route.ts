@@ -8,13 +8,12 @@ Airtable.configure({
 
 const base = Airtable.base(process.env.AIRTABLE_BASE_ID!);
 
-export async function GET() {
-  // Add cache control headers
-  const headers = {
-    'Cache-Control': 'no-store, max-age=0',
-    'Content-Type': 'application/json',
-  };
+// 12 hours in seconds
+const CACHE_MAX_AGE = 60 * 60 * 12;
 
+export const revalidate = CACHE_MAX_AGE;
+
+export async function GET() {
   try {
     const records = await base('wing-spots').select({
       maxRecords: 5,
@@ -32,19 +31,21 @@ export async function GET() {
       meat: record.fields['Meat (0-10)']
     }));
 
-    // Add a tag for revalidation
-    const response = NextResponse.json(
-      { success: true, data: topSpots }, 
-      { headers }
+    return NextResponse.json(
+      { success: true, data: topSpots },
+      {
+        headers: {
+          'Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate`,
+          'CDN-Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}`,
+          'Vercel-CDN-Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}`,
+        }
+      }
     );
-    response.headers.set('x-next-cache-tags', '/api/get-top-wings');
-    return response;
-    
   } catch (error) {
     console.error('Airtable fetch error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch rankings' },
-      { status: 500, headers }
+      { status: 500 }
     );
   }
 } 

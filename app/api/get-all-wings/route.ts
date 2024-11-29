@@ -8,8 +8,11 @@ Airtable.configure({
 
 const base = Airtable.base(process.env.AIRTABLE_BASE_ID!);
 
+// 12 hours in seconds
+const CACHE_MAX_AGE = 60 * 60 * 12;
+
 export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
+export const revalidate = CACHE_MAX_AGE;
 
 export async function GET() {
   try {
@@ -32,12 +35,9 @@ export async function GET() {
       { success: true, data: spots },
       {
         headers: {
-          'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate, s-maxage=1, stale-while-revalidate=1',
-          'CDN-Cache-Control': 'no-cache',
-          'Vercel-CDN-Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-          'x-next-cache-tags': 'wings'
+          'Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate`,
+          'CDN-Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}`,
+          'Vercel-CDN-Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}`,
         }
       }
     );
