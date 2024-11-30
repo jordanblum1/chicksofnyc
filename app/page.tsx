@@ -9,6 +9,7 @@ import { formatNumber } from "./utils/formatNumber";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDroplet, faFire, faDrumstickBite } from '@fortawesome/free-solid-svg-icons';
 import { useEffect, useState, useCallback } from 'react';
+import { useSwipeable } from 'react-swipeable';
 
 // Add this type declaration at the top after imports
 declare global {
@@ -140,6 +141,13 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedPhoto, handlePhotoNavigation]);
 
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => handlePhotoNavigation('next'),
+    onSwipedRight: () => handlePhotoNavigation('prev'),
+    preventScrollOnSwipe: true,
+    trackMouse: true
+  });
+
   return (
     <div className="page-container">
       <MenuBar />
@@ -261,61 +269,56 @@ export default function Home() {
         }}
         isPhotoModal={true}
       >
-        <div className="p-2 md:p-0">
-          <div className="relative flex items-center justify-center min-h-[50vh] md:min-h-[75vh]">
-            {/* Previous Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePhotoNavigation('prev');
-              }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-opacity hidden md:block z-10"
-              aria-label="Previous photo"
+        {selectedPhoto && (
+          <div className="p-2 md:p-0">
+            <div 
+              {...swipeHandlers}
+              className="relative flex items-center justify-center min-h-[50vh] md:min-h-[75vh]"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            <img
-              src={selectedPhoto || ''}
-              alt="Large view"
-              className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
-            />
-
-            {/* Next Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePhotoNavigation('next');
-              }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 p-2 rounded-full shadow-lg transition-opacity hidden md:block z-10"
-              aria-label="Next photo"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-
-            {/* Photo Counter and Full Size Button */}
-            <div className="absolute bottom-4 left-0 right-0 flex justify-between items-center px-4">
-              <span className="bg-white bg-opacity-80 px-3 py-1 rounded-md text-sm">
-                {selectedPhotoIndex + 1} / {photos.length}
-              </span>
+              {/* Previous Button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (selectedPhoto) {
-                    window.open(selectedPhoto, '_blank');
-                  }
+                  handlePhotoNavigation('prev');
                 }}
-                className="bg-white bg-opacity-80 hover:bg-opacity-100 text-gray-800 px-3 py-1 rounded-md text-sm transition-opacity"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 text-gray-800 p-2 rounded-full shadow-lg transition-opacity z-10"
+                aria-label="Previous photo"
               >
-                Open full size
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
               </button>
+
+              <Image
+                src={selectedPhoto || ''}
+                alt="Large view"
+                width={1200}
+                height={800}
+                className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
+                unoptimized
+              />
+
+              {/* Next Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePhotoNavigation('next');
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 text-gray-800 p-2 rounded-full shadow-lg transition-opacity z-10"
+                aria-label="Next photo"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* Photo Counter */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-md text-sm">
+                {selectedPhotoIndex + 1} / {photos.length}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </Modal>
 
       {/* Spot Details Modal */}

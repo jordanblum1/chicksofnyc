@@ -1,14 +1,19 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { useWingSpots } from "../hooks/useWingSpots";
 import MenuBar from "../components/MenuBar";
 import Modal from "../components/Modal";
+import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDroplet, faFire, faDrumstickBite } from '@fortawesome/free-solid-svg-icons';
-import { useState } from 'react';
 import { formatNumber } from "../utils/formatNumber";
-import Lottie from 'lottie-react';
+import dynamic from 'next/dynamic';
+import { useSwipeable } from 'react-swipeable';
+
+// Dynamically import Lottie and animation with no SSR
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+// Import animation directly since it's just JSON data
 import wingAnimation from '../animations/wings.json';
-import Image from 'next/image';
 
 interface SelectedSpot {
   id: string;
@@ -55,6 +60,48 @@ export default function Rankings() {
   const handlePhotoClick = (photo: string) => {
     setSelectedPhoto(photo);
   };
+
+  const handlePhotoNavigation = (direction: 'prev' | 'next') => {
+    if (!selectedPhoto || photos.length <= 1) return;
+    
+    const currentIndex = photos.indexOf(selectedPhoto);
+    let newIndex;
+    
+    if (direction === 'prev') {
+      newIndex = currentIndex === 0 ? photos.length - 1 : currentIndex - 1;
+    } else {
+      newIndex = currentIndex === photos.length - 1 ? 0 : currentIndex + 1;
+    }
+    
+    setSelectedPhoto(photos[newIndex]);
+  };
+
+  // Add keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedPhoto) return;
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handlePhotoNavigation('prev');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handlePhotoNavigation('next');
+      } else if (e.key === 'Escape') {
+        handleClosePhoto();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPhoto]);
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => handlePhotoNavigation('next'),
+    onSwipedRight: () => handlePhotoNavigation('prev'),
+    preventScrollOnSwipe: true,
+    trackMouse: true
+  });
 
   return (
     <div className="page-container">
@@ -275,15 +322,51 @@ export default function Rankings() {
         >
           {selectedPhoto && (
             <div className="p-2 md:p-0">
-              <div className="relative flex items-center justify-center min-h-[50vh] md:min-h-[75vh]">
+              <div 
+                {...swipeHandlers}
+                className="relative flex items-center justify-center min-h-[50vh] md:min-h-[75vh]"
+              >
+                {/* Previous Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePhotoNavigation('prev');
+                  }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 text-gray-800 p-2 rounded-full shadow-lg transition-opacity z-10"
+                  aria-label="Previous photo"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
                 <Image
                   src={selectedPhoto || ''}
                   alt="Large view"
                   width={1200}
                   height={800}
                   className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
-                  unoptimized // Since these are external URLs from Google Places API
+                  unoptimized
                 />
+
+                {/* Next Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePhotoNavigation('next');
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 text-gray-800 p-2 rounded-full shadow-lg transition-opacity z-10"
+                  aria-label="Next photo"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                {/* Photo Counter */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-md text-sm">
+                  {photos.indexOf(selectedPhoto) + 1} / {photos.length}
+                </div>
               </div>
             </div>
           )}

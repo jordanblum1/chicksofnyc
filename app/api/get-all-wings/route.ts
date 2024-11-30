@@ -11,16 +11,13 @@ const base = Airtable.base(process.env.AIRTABLE_BASE_ID!);
 // 12 hours in seconds
 const CACHE_MAX_AGE = 60 * 60 * 12;
 
-// Configure route segment config for server-side caching
-export const runtime = 'edge';
-export const preferredRegion = 'auto';
 export const revalidate = CACHE_MAX_AGE;
 
 export async function GET() {
   try {
     const records = await base('wing-spots').select({
-      sort: [{field: 'Overall Ranking', direction: 'desc'}],
-      filterByFormula: 'NOT({Overall Ranking} = "")'
+      view: 'Grid view',
+      sort: [{ field: 'Overall Ranking', direction: 'desc' }]
     }).firstPage();
 
     const spots = records.map(record => ({
@@ -33,27 +30,19 @@ export async function GET() {
       meat: record.fields['Meat (0-10)']
     }));
 
-    return new NextResponse(
-      JSON.stringify({ success: true, data: spots }),
+    return NextResponse.json(
+      { success: true, data: spots },
       {
-        status: 200,
         headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate`,
+          'Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate`
         }
       }
     );
   } catch (error) {
     console.error('Airtable fetch error:', error);
-    return new NextResponse(
-      JSON.stringify({ error: 'Failed to fetch rankings' }),
-      { 
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store'
-        }
-      }
+    return NextResponse.json(
+      { error: 'Failed to fetch rankings' },
+      { status: 500 }
     );
   }
 } 
