@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useWingSpots } from "../hooks/useWingSpots";
 import MenuBar from "../components/MenuBar";
 import Modal from "../components/Modal";
@@ -10,6 +10,7 @@ import { formatNumber } from "../utils/formatNumber";
 import dynamic from 'next/dynamic';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import type { Settings } from 'react-slick';
 
 const Slider = dynamic(() => import('react-slick'), { ssr: false });
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -30,9 +31,9 @@ export default function Rankings() {
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const handleClosePhoto = () => {
+  const handleClosePhoto = useCallback(() => {
     setSelectedPhoto(null);
-  };
+  }, []);
 
   const handleCloseSpot = () => {
     setSelectedSpot(null);
@@ -63,29 +64,22 @@ export default function Rankings() {
     setSelectedPhoto(photo);
   };
 
-  const handlePhotoNavigation = (direction: 'prev' | 'next') => {
-    if (!selectedPhoto || photos.length <= 1 || isAnimating) return;
+  const handlePhotoNavigation = useCallback((direction: 'prev' | 'next') => {
+    if (!selectedPhoto || photos.length <= 1) return;
     
-    setIsAnimating(true);
     const currentIndex = photos.indexOf(selectedPhoto);
     let newIndex;
     
     if (direction === 'prev') {
-      setSlideDirection('right');
       newIndex = currentIndex === 0 ? photos.length - 1 : currentIndex - 1;
     } else {
-      setSlideDirection('left');
       newIndex = currentIndex === photos.length - 1 ? 0 : currentIndex + 1;
     }
     
-    setTimeout(() => {
-      setSelectedPhoto(photos[newIndex]);
-      setSlideDirection(null);
-      setIsAnimating(false);
-    }, 300);
-  };
+    setSelectedPhoto(photos[newIndex]);
+  }, [selectedPhoto, photos]);
 
-  // Add keyboard navigation
+  // Update useEffect dependency array
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedPhoto) return;
@@ -103,9 +97,9 @@ export default function Rankings() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedPhoto]);
+  }, [selectedPhoto, handlePhotoNavigation, handleClosePhoto]);
 
-  const sliderSettings = {
+  const sliderSettings: Settings = {
     dots: false,
     infinite: true,
     speed: 500,

@@ -1,4 +1,5 @@
 'use client';
+
 import { useWingSpots } from "./hooks/useWingSpots";
 import Image from "next/image";
 import MenuBar from "./components/MenuBar";
@@ -12,9 +13,15 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import dynamic from 'next/dynamic';
+import { default as nextDynamic } from 'next/dynamic';
+import type { Settings } from 'react-slick';
 
-const Slider = dynamic(() => import('react-slick'), { ssr: false });
+// Configure page options
+export const runtime = 'edge';
+export const preferredRegion = 'auto';
+
+const Slider = nextDynamic(() => import('react-slick'), { ssr: false });
+const InstagramEmbed = nextDynamic(() => import('./components/InstagramEmbed'), { ssr: false });
 
 // Add this type declaration at the top after imports
 declare global {
@@ -77,34 +84,36 @@ export default function Home() {
   }, [selectedSpot]);
 
   useEffect(() => {
-    // Check if we're in the browser
+    // Only run in browser environment
     if (typeof window === 'undefined') return;
 
-    // Load Instagram embed script
-    const script = document.createElement('script');
-    script.src = '//www.instagram.com/embed.js';
-    script.async = true;
-    document.body.appendChild(script);
+    const loadInstagramEmbed = () => {
+      const script = document.createElement('script');
+      script.src = '//www.instagram.com/embed.js';
+      script.async = true;
+      document.body.appendChild(script);
 
-    // Process embeds when script loads
-    script.onload = () => {
-      if (window.instgrm) {
-        window.instgrm.Embeds.process();
-      }
+      script.onload = () => {
+        if (window.instgrm) {
+          window.instgrm.Embeds.process();
+        }
+      };
     };
 
-    // If script is already loaded, process embeds immediately
-    if (window.instgrm) {
+    // Check if script is already loaded
+    if (!document.querySelector('script[src*="instagram.com/embed.js"]')) {
+      loadInstagramEmbed();
+    } else if (window.instgrm) {
       window.instgrm.Embeds.process();
     }
 
     return () => {
-      // Cleanup script when component unmounts
-      if (script.parentNode) {
-        document.body.removeChild(script);
+      const script = document.querySelector('script[src*="instagram.com/embed.js"]');
+      if (script?.parentNode) {
+        script.parentNode.removeChild(script);
       }
     };
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   const handleSpotClick = (spot: SelectedSpot) => {
     setSelectedSpot(spot);
@@ -162,7 +171,7 @@ export default function Home() {
     trackMouse: true
   });
 
-  const sliderSettings = {
+  const sliderSettings: Settings = {
     dots: false,
     infinite: true,
     speed: 500,
@@ -260,20 +269,7 @@ export default function Home() {
 
           <div className="slide-up">
             <h2 className="text-2xl font-bold mb-4 invisible">Spacer</h2>
-            <blockquote 
-              className="instagram-media card h-full" 
-              data-instgrm-permalink="https://www.instagram.com/chicksofnewyorkcity/"
-              data-instgrm-version="14"
-              style={{ 
-                border: '0',
-                margin: '1px',
-                maxWidth: '100%',
-                minWidth: '326px',
-                padding: '0',
-                width: '99.375%',
-                height: '93%'
-              }}
-            ></blockquote>
+            <InstagramEmbed />
           </div>
         </div>
 
@@ -381,10 +377,13 @@ export default function Home() {
                         setSelectedPhotoIndex(index);
                       }}
                     >
-                      <img
+                      <Image
                         src={photo}
                         alt={`${selectedSpot.name} photo ${index + 1}`}
                         className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        priority={index === 0}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>

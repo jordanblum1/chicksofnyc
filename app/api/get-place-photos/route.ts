@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 interface PlacePhoto {
   photo_reference: string;
@@ -10,15 +10,16 @@ const PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 // 12 hours in seconds
 const CACHE_MAX_AGE = 60 * 60 * 12;
 
-export const revalidate = CACHE_MAX_AGE;
+// Configure route for dynamic usage
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 async function getPlaceId(query: string) {
   console.log('Searching for place:', query);
   const response = await fetch(
     `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(
       query
-    )}&inputtype=textquery&fields=place_id&key=${PLACES_API_KEY}`,
-    { next: { revalidate: CACHE_MAX_AGE } }
+    )}&inputtype=textquery&fields=place_id&key=${PLACES_API_KEY}`
   );
   const data = await response.json();
   console.log('Place search response:', data);
@@ -28,8 +29,7 @@ async function getPlaceId(query: string) {
 async function getPlaceDetails(placeId: string) {
   console.log('Fetching details for place ID:', placeId);
   const response = await fetch(
-    `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=photos&key=${PLACES_API_KEY}`,
-    { next: { revalidate: CACHE_MAX_AGE } }
+    `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=photos&key=${PLACES_API_KEY}`
   );
   const data = await response.json();
   console.log('Place details response:', data);
@@ -40,7 +40,7 @@ async function getPhotoUrl(photoReference: string): Promise<string | null> {
   try {
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/place/photo?maxheight=400&photo_reference=${photoReference}&key=${PLACES_API_KEY}`,
-      { redirect: 'manual', next: { revalidate: CACHE_MAX_AGE } }
+      { redirect: 'manual' }
     );
     return response.headers.get('location');
   } catch (error) {
@@ -49,11 +49,10 @@ async function getPhotoUrl(photoReference: string): Promise<string | null> {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const name = searchParams.get('name');
-    const address = searchParams.get('address');
+    const name = request.nextUrl.searchParams.get('name');
+    const address = request.nextUrl.searchParams.get('address');
 
     console.log('Received request for:', { name, address });
 
