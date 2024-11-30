@@ -6,6 +6,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDroplet, faFire, faDrumstickBite } from '@fortawesome/free-solid-svg-icons';
 import { useState } from 'react';
 import { formatNumber } from "../utils/formatNumber";
+import Lottie from 'lottie-react';
+import wingAnimation from '../animations/wings.json';
+import Image from 'next/image';
 
 interface SelectedSpot {
   id: string;
@@ -29,9 +32,24 @@ export default function Rankings() {
     setPhotos([]);
   };
 
-  const handleSpotClick = (spot: SelectedSpot) => {
+  const handleSpotClick = async (spot: SelectedSpot) => {
     setSelectedSpot(spot);
     setPhotos([]); // Reset photos when selecting a new spot
+    setLoadingPhotos(true);
+
+    try {
+      const response = await fetch(
+        `/api/get-place-photos?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`
+      );
+      const data = await response.json();
+      if (data.photos) {
+        setPhotos(data.photos);
+      }
+    } catch (error) {
+      console.error('Error fetching photos:', error);
+    } finally {
+      setLoadingPhotos(false);
+    }
   };
 
   const handlePhotoClick = (photo: string) => {
@@ -179,19 +197,71 @@ export default function Rankings() {
           onClose={handleCloseSpot}
         >
           {selectedSpot && (
-            <div className="p-6">
-              <h2 className="text-2xl font-bold mb-2">{selectedSpot.name}</h2>
-              <p className="text-gray-600 mb-4">{selectedSpot.address}</p>
-              <div className="aspect-w-16 aspect-h-9">
+            <div className="p-6 space-y-6">
+              <div className="flex items-center gap-3 animate-fade-in">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-deep-orange-500 to-deep-orange-400 bg-clip-text text-transparent">
+                  {selectedSpot.name}
+                </h2>
+                <div className="animate-wing-flap">
+                  🍗
+                </div>
+              </div>
+              <p className="text-gray-600 text-sm flex items-center">
+                <svg className="w-4 h-4 mr-1 text-deep-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {selectedSpot.address}
+              </p>
+
+              {/* Photos Section */}
+              {loadingPhotos ? (
+                <div className="h-32 flex items-center justify-center">
+                  <div className="w-24 h-24">
+                    <Lottie animationData={wingAnimation} loop={true} />
+                  </div>
+                </div>
+              ) : photos.length > 0 ? (
+                <div className="animate-slide-in-right">
+                  <h3 className="text-lg font-semibold mb-3 text-deep-orange-500 flex items-center gap-2">
+                    Photos
+                    <span className="animate-wing-flap text-sm">🍗</span>
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                    {photos.map((photo, index) => (
+                      <div 
+                        key={index} 
+                        className="relative aspect-w-16 aspect-h-9 group cursor-pointer 
+                                 overflow-hidden rounded-lg border-4 border-deep-orange-100 
+                                 hover:border-deep-orange-300 transition-all duration-300
+                                 shadow-md hover:shadow-xl animate-border-pulse
+                                 md:aspect-w-4 md:aspect-h-3"
+                        onClick={() => handlePhotoClick(photo)}
+                      >
+                        <Image
+                          src={photo}
+                          alt={`${selectedSpot.name} photo ${index + 1}`}
+                          fill
+                          className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
+                          unoptimized // Since these are external URLs from Google Places API
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Google Maps iframe */}
+              <div className="rounded-lg overflow-hidden border-4 border-deep-orange-100 shadow-lg animate-fade-in hover:border-deep-orange-200 transition-colors duration-300">
                 <iframe
-                  src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(
-                    selectedSpot.name + ' ' + selectedSpot.address
-                  )}`}
-                  style={{ border: 0, borderRadius: '0.5rem' }}
-                  allowFullScreen={false}
+                  width="100%"
+                  height="350"
+                  style={{ border: 0 }}
                   loading="lazy"
+                  allowFullScreen
                   referrerPolicy="no-referrer-when-downgrade"
-                  className="w-full h-full"
+                  src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(selectedSpot.name + ' ' + selectedSpot.address)}`}
                 ></iframe>
               </div>
             </div>
@@ -204,12 +274,17 @@ export default function Rankings() {
           isPhotoModal={true}
         >
           {selectedPhoto && (
-            <div className="flex items-center justify-center">
-              <img
-                src={selectedPhoto}
-                alt="Wing spot photo"
-                className="max-w-full max-h-[80vh] rounded-lg"
-              />
+            <div className="p-2 md:p-0">
+              <div className="relative flex items-center justify-center min-h-[50vh] md:min-h-[75vh]">
+                <Image
+                  src={selectedPhoto || ''}
+                  alt="Large view"
+                  width={1200}
+                  height={800}
+                  className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
+                  unoptimized // Since these are external URLs from Google Places API
+                />
+              </div>
             </div>
           )}
         </Modal>
