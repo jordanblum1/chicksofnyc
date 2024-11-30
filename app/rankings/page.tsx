@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWingSpots } from "../hooks/useWingSpots";
 import MenuBar from "../components/MenuBar";
 import Modal from "../components/Modal";
@@ -11,8 +11,9 @@ import dynamic from 'next/dynamic';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import type { Settings } from 'react-slick';
+import Slider from 'react-slick';
+import { useSwipeable } from 'react-swipeable';
 
-const Slider = dynamic(() => import('react-slick'), { ssr: false });
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 import wingAnimation from '../animations/wings.json';
 
@@ -20,20 +21,91 @@ interface SelectedSpot {
   id: string;
   name: string;
   address: string;
+  overallRanking: number;
+  sauce: number;
+  crispyness: number;
+  meat: number;
 }
 
-export default function Rankings() {
+export default function RankingsPage() {
   const { spots, loading, error } = useWingSpots('/api/get-all-wings');
   const [selectedSpot, setSelectedSpot] = useState<SelectedSpot | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number>(-1);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const sliderRef = useRef<Slider>(null);
+
+  useEffect(() => {
+    async function fetchPhotos() {
+      if (!selectedSpot) return;
+      
+      setLoadingPhotos(true);
+      try {
+        const response = await fetch(
+          `/api/get-place-photos?name=${encodeURIComponent(selectedSpot.name)}&address=${encodeURIComponent(selectedSpot.address)}`
+        );
+        const data = await response.json();
+        if (data.photos) {
+          setPhotos(data.photos);
+        }
+      } catch (error) {
+        console.error('Error fetching photos:', error);
+      } finally {
+        setLoadingPhotos(false);
+      }
+    }
+
+    fetchPhotos();
+  }, [selectedSpot]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!selectedPhoto || !sliderRef.current) return;
+      
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        sliderRef.current.slickPrev();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        sliderRef.current.slickNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPhoto]);
+
+  const sliderSettings: Settings = {
+    dots: false,
+    infinite: true,
+    speed: 300,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    swipe: true,
+    arrows: true,
+    afterChange: (current) => {
+      setSelectedPhotoIndex(current);
+      setSelectedPhoto(photos[current]);
+    }
+  };
+
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => sliderRef.current?.slickNext(),
+    onSwipedRight: () => sliderRef.current?.slickPrev(),
+    preventScrollOnSwipe: true,
+    trackMouse: true
+  });
 
   const handleClosePhoto = useCallback(() => {
     setSelectedPhoto(null);
+    setSelectedPhotoIndex(-1);
   }, []);
+
+  const handlePhotoClick = (photo: string, index: number) => {
+    setSelectedPhoto(photo);
+    setSelectedPhotoIndex(index);
+  };
 
   const handleCloseSpot = () => {
     setSelectedSpot(null);
@@ -57,60 +129,6 @@ export default function Rankings() {
       console.error('Error fetching photos:', error);
     } finally {
       setLoadingPhotos(false);
-    }
-  };
-
-  const handlePhotoClick = (photo: string) => {
-    setSelectedPhoto(photo);
-  };
-
-  const handlePhotoNavigation = useCallback((direction: 'prev' | 'next') => {
-    if (!selectedPhoto || photos.length <= 1) return;
-    
-    const currentIndex = photos.indexOf(selectedPhoto);
-    let newIndex;
-    
-    if (direction === 'prev') {
-      newIndex = currentIndex === 0 ? photos.length - 1 : currentIndex - 1;
-    } else {
-      newIndex = currentIndex === photos.length - 1 ? 0 : currentIndex + 1;
-    }
-    
-    setSelectedPhoto(photos[newIndex]);
-  }, [selectedPhoto, photos]);
-
-  // Update useEffect dependency array
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!selectedPhoto) return;
-      
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        handlePhotoNavigation('prev');
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        handlePhotoNavigation('next');
-      } else if (e.key === 'Escape') {
-        handleClosePhoto();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedPhoto, handlePhotoNavigation, handleClosePhoto]);
-
-  const sliderSettings: Settings = {
-    dots: false,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    initialSlide: photos.indexOf(selectedPhoto || ''),
-    swipe: true,
-    arrows: true,
-    adaptiveHeight: true,
-    beforeChange: (current: number, next: number) => {
-      setSelectedPhoto(photos[next]);
     }
   };
 
@@ -290,18 +308,19 @@ export default function Rankings() {
                       <div 
                         key={index} 
                         className="relative aspect-w-16 aspect-h-9 group cursor-pointer 
-                                 overflow-hidden rounded-lg border-4 border-deep-orange-100 
-                                 hover:border-deep-orange-300 transition-all duration-300
-                                 shadow-md hover:shadow-xl animate-border-pulse
-                                 md:aspect-w-4 md:aspect-h-3"
-                        onClick={() => handlePhotoClick(photo)}
+                                   overflow-hidden rounded-lg border-4 border-deep-orange-100 
+                                   hover:border-deep-orange-300 transition-all duration-300
+                                   shadow-md hover:shadow-xl animate-border-pulse
+                                   md:aspect-w-4 md:aspect-h-3"
+                        onClick={() => handlePhotoClick(photo, index)}
                       >
                         <Image
                           src={photo}
-                          alt={`${selectedSpot.name} photo ${index + 1}`}
-                          fill
+                          alt={`${selectedSpot?.name} photo ${index + 1}`}
                           className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
-                          unoptimized // Since these are external URLs from Google Places API
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          priority={index === 0}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
@@ -328,32 +347,40 @@ export default function Rankings() {
 
         <Modal
           isOpen={!!selectedPhoto}
-          onClose={handleClosePhoto}
+          onClose={() => {
+            setSelectedPhoto(null);
+            setSelectedPhotoIndex(-1);
+          }}
           isPhotoModal={true}
         >
           {selectedPhoto && (
             <div className="p-2 md:p-0">
               <div className="relative min-h-[50vh] md:min-h-[75vh] flex items-center">
-                <Slider {...sliderSettings} className="w-full">
-                  {photos.map((photo, index) => (
-                    <div key={index} className="outline-none">
-                      <div className="flex items-center justify-center min-h-[50vh] md:min-h-[75vh] px-4">
-                        <Image
-                          src={photo}
-                          alt={`${selectedSpot?.name} photo ${index + 1}`}
-                          width={1200}
-                          height={800}
-                          className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
-                          unoptimized
-                        />
+                <div className="w-full" {...swipeHandlers}>
+                  <Slider 
+                    {...sliderSettings} 
+                    ref={sliderRef}
+                  >
+                    {photos.map((photo, index) => (
+                      <div key={index} className="outline-none">
+                        <div className="flex items-center justify-center min-h-[50vh] md:min-h-[75vh] px-4">
+                          <Image
+                            src={photo}
+                            alt={`${selectedSpot?.name} photo ${index + 1}`}
+                            width={1200}
+                            height={800}
+                            className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
+                            priority={index === selectedPhotoIndex}
+                            unoptimized
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </Slider>
+                    ))}
+                  </Slider>
+                </div>
                 
-                {/* Photo Counter */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-md text-sm z-10">
-                  {photos.indexOf(selectedPhoto) + 1} / {photos.length}
+                  {selectedPhotoIndex + 1} / {photos.length}
                 </div>
               </div>
             </div>
