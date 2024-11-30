@@ -9,18 +9,18 @@ import wingAnimation from "./animations/wings.json";
 import { formatNumber } from "./utils/formatNumber";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDroplet, faFire, faDrumstickBite } from '@fortawesome/free-solid-svg-icons';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { default as nextDynamic } from 'next/dynamic';
 import type { Settings } from 'react-slick';
+import Slider from 'react-slick';
 
 // Configure page options
 export const runtime = 'edge';
 export const preferredRegion = 'auto';
 
-const Slider = nextDynamic(() => import('react-slick'), { ssr: false });
 const InstagramEmbed = nextDynamic(() => import('./components/InstagramEmbed'), { ssr: false });
 
 // Add this type declaration at the top after imports
@@ -48,6 +48,7 @@ export default function Home() {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number>(-1);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const sliderRef = useRef<Slider>(null);
 
   const handleClosePhoto = () => {
     setSelectedPhoto(null);
@@ -125,48 +126,26 @@ export default function Home() {
     setSelectedPhotoIndex(index);
   };
 
-  const handlePhotoNavigation = useCallback((direction: 'prev' | 'next') => {
-    if (selectedPhotoIndex === -1 || isAnimating) return;
-    
-    setIsAnimating(true);
-    let newIndex = selectedPhotoIndex;
-    if (direction === 'prev') {
-      setSlideDirection('right');
-      newIndex = selectedPhotoIndex === 0 ? photos.length - 1 : selectedPhotoIndex - 1;
-    } else {
-      setSlideDirection('left');
-      newIndex = selectedPhotoIndex === photos.length - 1 ? 0 : selectedPhotoIndex + 1;
-    }
-    
-    setTimeout(() => {
-      setSelectedPhotoIndex(newIndex);
-      setSelectedPhoto(photos[newIndex]);
-      setSlideDirection(null);
-      setIsAnimating(false);
-    }, 300);
-  }, [selectedPhotoIndex, photos, isAnimating]);
-
-  // Add keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!selectedPhoto) return;
+      if (!selectedPhoto || !sliderRef.current) return;
       
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        handlePhotoNavigation('prev');
+        sliderRef.current.slickPrev();
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-        handlePhotoNavigation('next');
+        sliderRef.current.slickNext();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedPhoto, handlePhotoNavigation]);
+  }, [selectedPhoto]);
 
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => handlePhotoNavigation('next'),
-    onSwipedRight: () => handlePhotoNavigation('prev'),
+    onSwipedLeft: () => sliderRef.current?.slickNext(),
+    onSwipedRight: () => sliderRef.current?.slickPrev(),
     preventScrollOnSwipe: true,
     trackMouse: true
   });
@@ -174,16 +153,14 @@ export default function Home() {
   const sliderSettings: Settings = {
     dots: false,
     infinite: true,
-    speed: 500,
+    speed: 300,
     slidesToShow: 1,
     slidesToScroll: 1,
-    initialSlide: selectedPhotoIndex,
     swipe: true,
     arrows: true,
-    adaptiveHeight: true,
-    beforeChange: (current: number, next: number) => {
-      setSelectedPhotoIndex(next);
-      setSelectedPhoto(photos[next]);
+    afterChange: (current) => {
+      setSelectedPhotoIndex(current);
+      setSelectedPhoto(photos[current]);
     }
   };
 
@@ -298,24 +275,29 @@ export default function Home() {
         {selectedPhoto && (
           <div className="p-2 md:p-0">
             <div className="relative min-h-[50vh] md:min-h-[75vh] flex items-center">
-              <Slider {...sliderSettings} className="w-full">
-                {photos.map((photo, index) => (
-                  <div key={index} className="outline-none">
-                    <div className="flex items-center justify-center min-h-[50vh] md:min-h-[75vh] px-4">
-                      <Image
-                        src={photo}
-                        alt={`${selectedSpot?.name} photo ${index + 1}`}
-                        width={1200}
-                        height={800}
-                        className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
-                        unoptimized
-                      />
+              <div className="w-full">
+                <Slider 
+                  {...sliderSettings} 
+                  ref={sliderRef}
+                >
+                  {photos.map((photo, index) => (
+                    <div key={index} className="outline-none">
+                      <div className="flex items-center justify-center min-h-[50vh] md:min-h-[75vh] px-4">
+                        <Image
+                          src={photo}
+                          alt={`${selectedSpot?.name} photo ${index + 1}`}
+                          width={1200}
+                          height={800}
+                          className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
+                          priority={index === selectedPhotoIndex}
+                          unoptimized
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </Slider>
+                  ))}
+                </Slider>
+              </div>
               
-              {/* Photo Counter */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-md text-sm z-10">
                 {selectedPhotoIndex + 1} / {photos.length}
               </div>
