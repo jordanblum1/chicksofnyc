@@ -8,11 +8,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDroplet, faFire, faDrumstickBite } from '@fortawesome/free-solid-svg-icons';
 import { formatNumber } from "../utils/formatNumber";
 import dynamic from 'next/dynamic';
-import { useSwipeable } from 'react-swipeable';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
-// Dynamically import Lottie and animation with no SSR
+const Slider = dynamic(() => import('react-slick'), { ssr: false });
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
-// Import animation directly since it's just JSON data
 import wingAnimation from '../animations/wings.json';
 
 interface SelectedSpot {
@@ -105,12 +105,20 @@ export default function Rankings() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedPhoto]);
 
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => handlePhotoNavigation('next'),
-    onSwipedRight: () => handlePhotoNavigation('prev'),
-    preventScrollOnSwipe: true,
-    trackMouse: true
-  });
+  const sliderSettings = {
+    dots: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    initialSlide: photos.indexOf(selectedPhoto || ''),
+    swipe: true,
+    arrows: true,
+    adaptiveHeight: true,
+    beforeChange: (current: number, next: number) => {
+      setSelectedPhoto(photos[next]);
+    }
+  };
 
   return (
     <div className="page-container">
@@ -331,79 +339,26 @@ export default function Rankings() {
         >
           {selectedPhoto && (
             <div className="p-2 md:p-0">
-              <div 
-                {...swipeHandlers}
-                className="relative flex items-center justify-center min-h-[50vh] md:min-h-[75vh] overflow-hidden"
-              >
-                {/* Previous Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePhotoNavigation('prev');
-                  }}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 text-gray-800 p-2 rounded-full shadow-lg transition-opacity z-10"
-                  aria-label="Previous photo"
-                  disabled={isAnimating}
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-
-                <div className="relative w-full h-full">
-                  <div className={`
-                    absolute inset-0 flex justify-center items-center
-                    transition-transform duration-300 ease-out
-                    ${slideDirection === 'left' ? '-translate-x-full' : ''}
-                    ${slideDirection === 'right' ? 'translate-x-full' : ''}
-                    ${!slideDirection ? 'translate-x-0' : ''}
-                  `}>
-                    <Image
-                      src={selectedPhoto || ''}
-                      alt="Large view"
-                      width={1200}
-                      height={800}
-                      className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
-                      unoptimized
-                    />
-                  </div>
-
-                  {slideDirection && (
-                    <div className={`
-                      absolute inset-0 flex justify-center items-center
-                      ${slideDirection === 'left' ? 'translate-x-full' : '-translate-x-full'}
-                      transition-transform duration-300 ease-out
-                      ${slideDirection ? 'translate-x-0' : ''}
-                    `}>
-                      <Image
-                        src={photos[(photos.indexOf(selectedPhoto) + (slideDirection === 'left' ? 1 : -1) + photos.length) % photos.length]}
-                        alt="Next view"
-                        width={1200}
-                        height={800}
-                        className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
-                        unoptimized
-                      />
+              <div className="relative min-h-[50vh] md:min-h-[75vh] flex items-center">
+                <Slider {...sliderSettings} className="w-full">
+                  {photos.map((photo, index) => (
+                    <div key={index} className="outline-none">
+                      <div className="flex items-center justify-center min-h-[50vh] md:min-h-[75vh] px-4">
+                        <Image
+                          src={photo}
+                          alt={`${selectedSpot?.name} photo ${index + 1}`}
+                          width={1200}
+                          height={800}
+                          className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
+                          unoptimized
+                        />
+                      </div>
                     </div>
-                  )}
-                </div>
-
-                {/* Next Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePhotoNavigation('next');
-                  }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 text-gray-800 p-2 rounded-full shadow-lg transition-opacity z-10"
-                  aria-label="Next photo"
-                  disabled={isAnimating}
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-
+                  ))}
+                </Slider>
+                
                 {/* Photo Counter */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-md text-sm">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-md text-sm z-10">
                   {photos.indexOf(selectedPhoto) + 1} / {photos.length}
                 </div>
               </div>

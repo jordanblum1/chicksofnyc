@@ -242,3 +242,48 @@ h2 {
     border-radius: 0.5rem;
   }
 }
+
+/* Slick Carousel Customization */
+.slick-prev,
+.slick-next {
+  width: 40px !important;
+  height: 40px !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-radius: 50% !important;
+  z-index: 10 !important;
+  transition: all 0.3s ease !important;
+}
+
+.slick-prev:hover,
+.slick-next:hover {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.slick-prev {
+  left: 10px !important;
+}
+
+.slick-next {
+  right: 10px !important;
+}
+
+.slick-prev:before,
+.slick-next:before {
+  color: #333 !important;
+  font-size: 24px !important;
+  opacity: 0.75 !important;
+}
+
+/* Hide focus outline */
+.slick-slide:focus {
+  outline: none !important;
+}
+
+/* Smooth sliding animation */
+.slick-slider {
+  touch-action: pan-y !important;
+}
+
+.slick-track {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
