@@ -27,6 +27,8 @@ export default function Rankings() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const handleClosePhoto = () => {
     setSelectedPhoto(null);
@@ -62,18 +64,25 @@ export default function Rankings() {
   };
 
   const handlePhotoNavigation = (direction: 'prev' | 'next') => {
-    if (!selectedPhoto || photos.length <= 1) return;
+    if (!selectedPhoto || photos.length <= 1 || isAnimating) return;
     
+    setIsAnimating(true);
     const currentIndex = photos.indexOf(selectedPhoto);
     let newIndex;
     
     if (direction === 'prev') {
+      setSlideDirection('right');
       newIndex = currentIndex === 0 ? photos.length - 1 : currentIndex - 1;
     } else {
+      setSlideDirection('left');
       newIndex = currentIndex === photos.length - 1 ? 0 : currentIndex + 1;
     }
     
-    setSelectedPhoto(photos[newIndex]);
+    setTimeout(() => {
+      setSelectedPhoto(photos[newIndex]);
+      setSlideDirection(null);
+      setIsAnimating(false);
+    }, 300);
   };
 
   // Add keyboard navigation
@@ -324,7 +333,7 @@ export default function Rankings() {
             <div className="p-2 md:p-0">
               <div 
                 {...swipeHandlers}
-                className="relative flex items-center justify-center min-h-[50vh] md:min-h-[75vh]"
+                className="relative flex items-center justify-center min-h-[50vh] md:min-h-[75vh] overflow-hidden"
               >
                 {/* Previous Button */}
                 <button
@@ -334,20 +343,49 @@ export default function Rankings() {
                   }}
                   className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 text-gray-800 p-2 rounded-full shadow-lg transition-opacity z-10"
                   aria-label="Previous photo"
+                  disabled={isAnimating}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
 
-                <Image
-                  src={selectedPhoto || ''}
-                  alt="Large view"
-                  width={1200}
-                  height={800}
-                  className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
-                  unoptimized
-                />
+                <div className="relative w-full h-full">
+                  <div className={`
+                    absolute inset-0 flex justify-center items-center
+                    transition-transform duration-300 ease-out
+                    ${slideDirection === 'left' ? '-translate-x-full' : ''}
+                    ${slideDirection === 'right' ? 'translate-x-full' : ''}
+                    ${!slideDirection ? 'translate-x-0' : ''}
+                  `}>
+                    <Image
+                      src={selectedPhoto || ''}
+                      alt="Large view"
+                      width={1200}
+                      height={800}
+                      className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
+                      unoptimized
+                    />
+                  </div>
+
+                  {slideDirection && (
+                    <div className={`
+                      absolute inset-0 flex justify-center items-center
+                      ${slideDirection === 'left' ? 'translate-x-full' : '-translate-x-full'}
+                      transition-transform duration-300 ease-out
+                      ${slideDirection ? 'translate-x-0' : ''}
+                    `}>
+                      <Image
+                        src={photos[(photos.indexOf(selectedPhoto) + (slideDirection === 'left' ? 1 : -1) + photos.length) % photos.length]}
+                        alt="Next view"
+                        width={1200}
+                        height={800}
+                        className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
+                        unoptimized
+                      />
+                    </div>
+                  )}
+                </div>
 
                 {/* Next Button */}
                 <button
@@ -357,6 +395,7 @@ export default function Rankings() {
                   }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 text-gray-800 p-2 rounded-full shadow-lg transition-opacity z-10"
                   aria-label="Next photo"
+                  disabled={isAnimating}
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
