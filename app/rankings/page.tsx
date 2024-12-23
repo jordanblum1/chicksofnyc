@@ -204,16 +204,16 @@ export default function RankingsPage() {
                         spot.overallRanking >= 8 ? 'text-green-500' : 
                         'text-yellow-500'
                       }`}>
-                        {formatNumber(spot.overallRanking)}/10
+                        {formatNumber(spot.overallRanking, 'overall')}/10
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className="text-secondary font-medium">{formatNumber(spot.sauce)}/10</span>
+                        <span className="text-secondary font-medium">{formatNumber(spot.sauce, 'sauce')}/10</span>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className="text-accent font-medium">{formatNumber(spot.crispyness)}/10</span>
+                        <span className="text-accent font-medium">{formatNumber(spot.crispyness, 'crispy')}/10</span>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className="text-primary-light font-medium">{formatNumber(spot.meat)}/10</span>
+                        <span className="text-primary-light font-medium">{formatNumber(spot.meat, 'meat')}/10</span>
                       </td>
                     </tr>
                   ))}
@@ -239,7 +239,7 @@ export default function RankingsPage() {
                       spot.overallRanking >= 8 ? 'text-green-500' : 
                       'text-yellow-500'
                     }`}>
-                      {formatNumber(spot.overallRanking)}/10
+                      {formatNumber(spot.overallRanking, 'overall')}/10
                     </span>
                   </div>
                   
@@ -249,17 +249,17 @@ export default function RankingsPage() {
                     <div className="text-center">
                       <FontAwesomeIcon icon={faDroplet} className="icon-sauce w-5 h-5 mb-1" />
                       <span className="text-gray-600 block">Sauce</span>
-                      <p className="font-medium text-secondary">{formatNumber(spot.sauce)}/10</p>
+                      <p className="font-medium text-secondary">{formatNumber(spot.sauce, 'sauce')}/10</p>
                     </div>
                     <div className="text-center">
                       <FontAwesomeIcon icon={faFire} className="icon-crispy w-5 h-5 mb-1" />
                       <span className="text-gray-600 block">Crispy</span>
-                      <p className="font-medium text-accent">{formatNumber(spot.crispyness)}/10</p>
+                      <p className="font-medium text-accent">{formatNumber(spot.crispyness, 'crispy')}/10</p>
                     </div>
                     <div className="text-center">
                       <FontAwesomeIcon icon={faDrumstickBite} className="icon-meat w-5 h-5 mb-1" />
                       <span className="text-gray-600 block">Meat</span>
-                      <p className="font-medium text-primary-light">{formatNumber(spot.meat)}/10</p>
+                      <p className="font-medium text-primary-light">{formatNumber(spot.meat, 'meat')}/10</p>
                     </div>
                   </div>
                 </div>

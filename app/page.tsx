@@ -199,7 +199,7 @@ export default function Home() {
                         spot.overallRanking >= 8 ? 'text-green-500' : 
                         'text-yellow-500'
                       }`}>
-                        {formatNumber(spot.overallRanking)}/10
+                        {formatNumber(spot.overallRanking, 'overall')}/10
                       </span>
                     </div>
                     <p className="text-gray-600 text-sm mb-4">{spot.address}</p>
@@ -213,7 +213,7 @@ export default function Home() {
                           />
                         </div>
                         <span className="text-xs text-gray-500">Sauce</span>
-                        <span className="font-semibold text-secondary">{formatNumber(spot.sauce)}/10</span>
+                        <span className="font-semibold text-secondary">{formatNumber(spot.sauce, 'sauce')}/10</span>
                       </div>
                       <div className="flex flex-col items-center gap-1">
                         <div className="flex items-center gap-1.5">
@@ -224,7 +224,7 @@ export default function Home() {
                           />
                         </div>
                         <span className="text-xs text-gray-500">Crispy</span>
-                        <span className="font-semibold text-accent">{formatNumber(spot.crispyness)}/10</span>
+                        <span className="font-semibold text-accent">{formatNumber(spot.crispyness, 'crispy')}/10</span>
                       </div>
                       <div className="flex flex-col items-center gap-1">
                         <div className="flex items-center gap-1.5">
@@ -235,7 +235,7 @@ export default function Home() {
                           />
                         </div>
                         <span className="text-xs text-gray-500">Meat</span>
-                        <span className="font-semibold text-primary-light">{formatNumber(spot.meat)}/10</span>
+                        <span className="font-semibold text-primary-light">{formatNumber(spot.meat, 'meat')}/10</span>
                       </div>
                     </div>
                   </div>
