@@ -18,13 +18,12 @@ export function useWingSpots(endpoint: string) {
   const fetchSpots = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${endpoint}?t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
           'Pragma': 'no-cache',
           'Cache-Control': 'no-cache, no-store, must-revalidate',
-        },
-        next: { revalidate: 0 }
+        }
       });
       if (!response.ok) throw new Error('Failed to fetch');
       const data = await response.json();

@@ -1,29 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { revalidatePath } from 'next/cache';
+import { NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const path = request.nextUrl.searchParams.get('path');
+    // Revalidate both the homepage and rankings page
+    revalidatePath('/', 'layout');
+    revalidatePath('/rankings', 'layout');
     
-    if (!path) {
-      return NextResponse.json(
-        { error: 'Path parameter is required' },
-        { status: 400 }
-      );
-    }
-
-    // Revalidate the specific path
-    revalidateTag(path);
-
-    return NextResponse.json({
-      revalidated: true,
-      now: Date.now(),
-      path
-    });
+    return NextResponse.json({ revalidated: true, now: Date.now() });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to revalidate' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Error revalidating' }, { status: 500 });
   }
 } 

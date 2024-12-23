@@ -8,11 +8,6 @@ Airtable.configure({
 
 const base = Airtable.base(process.env.AIRTABLE_BASE_ID!);
 
-// 12 hours in seconds
-const CACHE_MAX_AGE = 60 * 60 * 12;
-
-export const revalidate = CACHE_MAX_AGE;
-
 export async function GET() {
   try {
     const records = await base('wing-spots').select({
@@ -35,7 +30,9 @@ export async function GET() {
       { success: true, data: topSpots },
       {
         headers: {
-          'Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate`
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
         }
       }
     );

@@ -63,9 +63,22 @@ export default function AdminPage() {
     
     const refreshPromise = new Promise<string>(async (resolve, reject) => {
       try {
+        // First, revalidate the cache
         await fetch('/api/revalidate', {
           cache: 'no-store'
         });
+        
+        // Then force a refetch of the data
+        const response = await fetch('/api/get-top-wings?t=' + Date.now(), {
+          cache: 'no-store',
+          headers: {
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+          }
+        });
+        
+        if (!response.ok) throw new Error('Failed to refresh data');
+        
         resolve('Rankings refreshed successfully!');
       } catch (error) {
         reject('Failed to refresh rankings');
@@ -77,6 +90,8 @@ export default function AdminPage() {
       success: (message: string) => {
         setIsLoading(false);
         setRefreshStatus('Rankings refreshed successfully!');
+        // Force reload of data on all pages
+        window.location.reload();
         return (
           <div className="flex items-center gap-2">
             <CheckCircleIcon className="w-5 h-5 text-green-500" />
