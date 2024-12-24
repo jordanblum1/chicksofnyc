@@ -42,6 +42,7 @@ interface UnreviewedSpot {
 
 function MapComponent({ onSpotSelect }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
+  const initialLoadRef = useRef(true);
   const { spots: reviewedSpots } = useWingSpots<ReviewedSpot>('/api/get-all-wings');
   const { spots: unreviewed, loading } = useWingSpots<UnreviewedSpot>('/api/get-all-spots');
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -177,7 +178,7 @@ function MapComponent({ onSpotSelect }: MapProps) {
           const marker = new google.maps.Marker({
             position,
             map,
-            animation: google.maps.Animation.DROP,
+            animation: initialLoadRef.current ? google.maps.Animation.DROP : undefined,
             icon: markerOptions,
             title: spot.name
           });
@@ -259,7 +260,7 @@ function MapComponent({ onSpotSelect }: MapProps) {
           const marker = new google.maps.Marker({
             position,
             map,
-            animation: google.maps.Animation.DROP,
+            animation: initialLoadRef.current ? google.maps.Animation.DROP : undefined,
             icon: markerOptions,
             title: spot.name
           });
@@ -324,6 +325,9 @@ function MapComponent({ onSpotSelect }: MapProps) {
         }
       });
     });
+
+    // Set initialLoadRef to false after first render
+    initialLoadRef.current = false;
 
     setMarkers(newMarkers);
 
