@@ -374,15 +374,15 @@ function MapComponent({ onSpotSelect }: MapProps) {
       <div className="flex justify-center gap-6 items-center text-sm bg-white/90 py-2 px-4 rounded-full shadow-sm">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
-          <span className="font-medium">Wing Heaven (8+)</span>
+          <span className="font-medium">I gotta tell someone bout this (8+)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm"></div>
-          <span className="font-medium">Solid Wings (5-7)</span>
+          <span className="font-medium">Yum City, population you (5-7)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm"></div>
-          <span className="font-medium">Up to You (&lt;5)</span>
+          <span className="font-medium">Hopefully there's also a game on(&lt;5)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
