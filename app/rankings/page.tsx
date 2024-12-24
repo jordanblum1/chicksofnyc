@@ -290,6 +290,43 @@ export default function RankingsPage() {
                 {selectedSpot.address}
               </p>
 
+              {/* Ratings Section */}
+              <div className="bg-gradient-to-r from-deep-orange-300/80 to-deep-orange-400/60 rounded-xl p-3 animate-fade-in">
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="flex flex-col items-center justify-center p-2.5 bg-white/95 rounded-lg shadow-sm">
+                    <span className={`text-xl font-bold animate-number-pop animate-score-pulse ${
+                      selectedSpot.overallRanking < 5 ? 'text-red-500' : 
+                      selectedSpot.overallRanking >= 8 ? 'text-green-500' : 
+                      'text-yellow-500'
+                    }`}>
+                      {formatNumber(selectedSpot.overallRanking, 'overall')}
+                    </span>
+                    <span className="text-xs text-gray-700 font-semibold mt-0.5">Overall</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-2.5 bg-white/95 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xl font-bold text-secondary animate-number-pop [animation-delay:100ms] animate-score-wiggle">{formatNumber(selectedSpot.sauce, 'sauce')}</span>
+                      <FontAwesomeIcon icon={faDroplet} className="icon-sauce w-3.5 h-3.5 animate-icon-bounce" />
+                    </div>
+                    <span className="text-xs text-gray-700 font-semibold mt-0.5">Sauce</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-2.5 bg-white/95 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xl font-bold text-accent animate-number-pop [animation-delay:200ms] animate-score-pulse">{formatNumber(selectedSpot.crispyness, 'crispy')}</span>
+                      <FontAwesomeIcon icon={faFire} className="icon-crispy w-3.5 h-3.5 animate-icon-bounce" />
+                    </div>
+                    <span className="text-xs text-gray-700 font-semibold mt-0.5">Crispy</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-2.5 bg-white/95 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xl font-bold text-primary-light animate-number-pop [animation-delay:300ms] animate-score-wiggle">{formatNumber(selectedSpot.meat, 'meat')}</span>
+                      <FontAwesomeIcon icon={faDrumstickBite} className="icon-meat w-3.5 h-3.5 animate-icon-bounce" />
+                    </div>
+                    <span className="text-xs text-gray-700 font-semibold mt-0.5">Meat</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Photos Section */}
               {loadingPhotos ? (
                 <div className="h-32 flex items-center justify-center">
