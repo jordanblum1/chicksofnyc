@@ -16,6 +16,7 @@ import "slick-carousel/slick/slick-theme.css";
 import { default as nextDynamic } from 'next/dynamic';
 import type { Settings } from 'react-slick';
 import Slider from 'react-slick';
+import WingMap from './components/WingMap';
 
 // Configure page options
 export const runtime = 'edge';
@@ -34,6 +35,17 @@ declare global {
   }
 }
 
+interface WingSpot {
+  id: string;
+  name: string;
+  address: string;
+  overallRanking: number;
+  sauce: number;
+  crispyness: number;
+  meat: number;
+  instagram?: string;
+}
+
 interface SelectedSpot {
   name: string;
   address: string;
@@ -45,7 +57,7 @@ interface SelectedSpot {
 }
 
 export default function Home() {
-  const { spots: topSpots, loading, error } = useWingSpots('/api/get-top-wings');
+  const { spots: topSpots, loading, error } = useWingSpots<WingSpot>('/api/get-top-wings');
   const [selectedSpot, setSelectedSpot] = useState<SelectedSpot | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
@@ -256,15 +268,7 @@ export default function Home() {
         </div>
 
         <div className="mt-8 card p-4 slide-up">
-          <iframe
-            src="https://www.google.com/maps/d/u/0/embed?mid=13UCUpt_uJToGhcRjSQltSAbXV9zNDWg&ehbc=2E312F"
-            width="100%"
-            height="480"
-            style={{ border: 0, borderRadius: '0.5rem' }}
-            allowFullScreen={false}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          ></iframe>
+          <WingMap onSpotSelect={(spot) => setSelectedSpot(spot)} />
         </div>
       </div>
 

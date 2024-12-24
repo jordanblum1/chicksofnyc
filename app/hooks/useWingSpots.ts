@@ -1,45 +1,36 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
-interface WingSpot {
-  id: string;
-  name: string;
-  address: string;
-  overallRanking: number;
-  sauce: number;
-  crispyness: number;
-  meat: number;
+interface ApiResponse<T> {
+  success: boolean;
+  data: T[];
+  error?: string;
 }
 
-export function useWingSpots(endpoint: string) {
-  const [spots, setSpots] = useState<WingSpot[]>([]);
+export function useWingSpots<T>(endpoint: string) {
+  const [spots, setSpots] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSpots = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${endpoint}?t=${Date.now()}`, {
-        cache: 'no-store',
-        headers: {
-          'Pragma': 'no-cache',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
+  useEffect(() => {
+    async function fetchSpots() {
+      try {
+        const response = await fetch(endpoint);
+        const data: ApiResponse<T> = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to fetch spots');
         }
-      });
-      if (!response.ok) throw new Error('Failed to fetch');
-      const data = await response.json();
-      setSpots(data.data);
-    } catch (err) {
-      setError('Failed to load wing spots');
-      console.error(err);
-    } finally {
-      setLoading(false);
+
+        setSpots(data.data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
     }
+
+    fetchSpots();
   }, [endpoint]);
 
-  // Fetch only on mount
-  useEffect(() => {
-    fetchSpots();
-  }, [fetchSpots]);
-
-  return { spots, loading, error, refetch: fetchSpots };
+  return { spots, loading, error };
 } 

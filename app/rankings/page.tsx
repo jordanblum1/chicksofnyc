@@ -17,6 +17,17 @@ import { useSwipeable } from 'react-swipeable';
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 import wingAnimation from '../animations/wings.json';
 
+interface WingSpot {
+  id: string;
+  name: string;
+  address: string;
+  overallRanking: number;
+  sauce: number;
+  crispyness: number;
+  meat: number;
+  instagram?: string;
+}
+
 interface SelectedSpot {
   id: string;
   name: string;
@@ -29,7 +40,7 @@ interface SelectedSpot {
 }
 
 export default function RankingsPage() {
-  const { spots, loading, error } = useWingSpots('/api/get-all-wings');
+  const { spots, loading, error } = useWingSpots<WingSpot>('/api/get-all-wings');
   const [selectedSpot, setSelectedSpot] = useState<SelectedSpot | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
