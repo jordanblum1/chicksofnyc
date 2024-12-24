@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     const photoUrls = await Promise.all(
       photos
-        .slice(0, 5)
+        .slice(0, 6)
         .map((photo: PlacePhoto) => getPhotoUrl(photo.photo_reference))
     ).then(urls => urls.filter((url): url is string => url !== null));
 

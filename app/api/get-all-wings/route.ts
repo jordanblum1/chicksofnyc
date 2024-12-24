@@ -27,7 +27,8 @@ export async function GET() {
       overallRanking: record.fields['Overall Ranking'],
       sauce: record.fields['Sauce (0-10)'],
       crispyness: record.fields['Crispy-ness (0-10)'],
-      meat: record.fields['Meat (0-10)']
+      meat: record.fields['Meat (0-10)'],
+      instagram: record.fields['Instagram']
     }));
 
     return NextResponse.json(
