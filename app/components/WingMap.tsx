@@ -382,11 +382,11 @@ function MapComponent({ onSpotSelect }: MapProps) {
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm"></div>
-          <span className="font-medium">Hopefully there's also a game on(&lt;5)</span>
+          <span className="font-medium">Hopefully there's also a game on (&lt;5)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
-          <span className="font-medium">Yet to Try</span>
+          <span className="font-medium">On the list</span>
         </div>
       </div>
     </div>
