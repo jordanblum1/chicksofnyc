@@ -47,7 +47,7 @@ function MapComponent({ onSpotSelect }: MapProps) {
   const { spots: unreviewed, loading } = useWingSpots<UnreviewedSpot>('/api/get-all-spots');
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
-  const [activeInfoWindow, setActiveInfoWindow] = useState<google.maps.InfoWindow | null>(null);
+  const activeInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
 
   // Initialize map
@@ -140,13 +140,32 @@ function MapComponent({ onSpotSelect }: MapProps) {
     }
   }, [reviewedSpots, onSpotSelect]);
 
+  // Add click handler to map
+  useEffect(() => {
+    if (!map) return;
+
+    map.addListener('click', () => {
+      if (activeInfoWindowRef.current) {
+        activeInfoWindowRef.current.close();
+        activeInfoWindowRef.current = null;
+      }
+    });
+
+    return () => {
+      google.maps.event.clearListeners(map, 'click');
+    };
+  }, [map]);
+
   // Add markers when spots data is loaded
   useEffect(() => {
     if (!map || !reviewedSpots.length || !unreviewed.length) return;
 
     // Clear existing markers
     markers.forEach((marker: google.maps.Marker) => marker.setMap(null));
-    if (activeInfoWindow) activeInfoWindow.close();
+    if (activeInfoWindowRef.current) {
+      activeInfoWindowRef.current.close();
+      activeInfoWindowRef.current = null;
+    }
 
     const bounds = new google.maps.LatLngBounds();
     const newMarkers: google.maps.Marker[] = [];
@@ -224,11 +243,22 @@ function MapComponent({ onSpotSelect }: MapProps) {
             `
           });
 
-          // Add click handler for marker - now just opens info window
+          // Add click handler for marker
           marker.addListener('click', () => {
-            if (activeInfoWindow) activeInfoWindow.close();
+            console.log('Marker clicked:', spot.name);
+            console.log('Current active window ref:', activeInfoWindowRef.current);
+            
+            // Close any existing info window
+            if (activeInfoWindowRef.current) {
+              console.log('Closing existing info window');
+              activeInfoWindowRef.current.close();
+              activeInfoWindowRef.current = null;
+            }
+            
+            // Open this info window
+            console.log('Opening new info window for:', spot.name);
             infoWindow.open(map, marker);
-            setActiveInfoWindow(infoWindow);
+            activeInfoWindowRef.current = infoWindow;
           });
 
           newMarkers.push(marker);
@@ -316,9 +346,20 @@ function MapComponent({ onSpotSelect }: MapProps) {
 
           // Add click handler
           marker.addListener('click', () => {
-            if (activeInfoWindow) activeInfoWindow.close();
+            console.log('Unreviewed marker clicked:', spot.name);
+            console.log('Current active window ref:', activeInfoWindowRef.current);
+            
+            // Close any existing info window
+            if (activeInfoWindowRef.current) {
+              console.log('Closing existing info window');
+              activeInfoWindowRef.current.close();
+              activeInfoWindowRef.current = null;
+            }
+            
+            // Open this info window
+            console.log('Opening new info window for:', spot.name);
             infoWindow.open(map, marker);
-            setActiveInfoWindow(infoWindow);
+            activeInfoWindowRef.current = infoWindow;
           });
 
           newMarkers.push(marker);
@@ -338,6 +379,10 @@ function MapComponent({ onSpotSelect }: MapProps) {
 
     return () => {
       newMarkers.forEach((marker: google.maps.Marker) => marker.setMap(null));
+      if (activeInfoWindowRef.current) {
+        activeInfoWindowRef.current.close();
+        activeInfoWindowRef.current = null;
+      }
       if (window.handleVote) delete window.handleVote;
       if (window.handleSpotSelect) delete window.handleSpotSelect;
     };
