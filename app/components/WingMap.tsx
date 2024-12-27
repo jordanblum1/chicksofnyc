@@ -3,6 +3,7 @@ import { Wrapper } from "@googlemaps/react-wrapper";
 import { useWingSpots } from '../hooks/useWingSpots';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDrumstickBite, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
+import { TopVotedSpots } from './TopVotedSpots';
 
 interface MapProps {
   onSpotSelect: (spot: ReviewedSpot) => void;
@@ -409,33 +410,41 @@ function MapComponent({ onSpotSelect }: MapProps) {
         </div>
       </div>
 
-      <div className="relative w-full h-[480px] rounded-lg overflow-hidden">
-        <div ref={mapRef} className="w-full h-full" />
-        {loading && (
-          <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-            <div className="animate-spin">
-              <FontAwesomeIcon icon={faDrumstickBite} className="w-8 h-8 text-deep-orange-500" />
+      <div className="flex gap-6">
+        <div className="flex-1">
+          <div className="relative w-full h-[480px] rounded-lg overflow-hidden">
+            <div ref={mapRef} className="w-full h-full" />
+            {loading && (
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                <div className="animate-spin">
+                  <FontAwesomeIcon icon={faDrumstickBite} className="w-8 h-8 text-deep-orange-500" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center gap-6 items-center text-sm bg-white/90 py-2 px-4 rounded-full shadow-sm mt-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
+              <span className="font-medium">I gotta tell someone bout this (8+)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm"></div>
+              <span className="font-medium">Yum City, population you (5-7)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm"></div>
+              <span className="font-medium">Hopefully there's also a game on (&lt;5)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
+              <span className="font-medium">On the list</span>
             </div>
           </div>
-        )}
-      </div>
+        </div>
 
-      <div className="flex justify-center gap-6 items-center text-sm bg-white/90 py-2 px-4 rounded-full shadow-sm">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
-          <span className="font-medium">I gotta tell someone bout this (8+)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm"></div>
-          <span className="font-medium">Yum City, population you (5-7)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm"></div>
-          <span className="font-medium">Hopefully there's also a game on (&lt;5)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
-          <span className="font-medium">On the list</span>
+        <div className="w-80">
+          <TopVotedSpots spots={unreviewed.filter(spot => !spot.checkedOut)} />
         </div>
       </div>
     </div>
