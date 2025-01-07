@@ -3,6 +3,7 @@ import { Wrapper } from "@googlemaps/react-wrapper";
 import { useWingSpots } from '../hooks/useWingSpots';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDrumstickBite, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
+import { TopVotedSpots } from './TopVotedSpots';
 
 interface MapProps {
   onSpotSelect: (spot: ReviewedSpot) => void;
@@ -47,7 +48,7 @@ function MapComponent({ onSpotSelect }: MapProps) {
   const { spots: unreviewed, loading } = useWingSpots<UnreviewedSpot>('/api/get-all-spots');
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
-  const [activeInfoWindow, setActiveInfoWindow] = useState<google.maps.InfoWindow | null>(null);
+  const activeInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
 
   // Initialize map
@@ -140,13 +141,32 @@ function MapComponent({ onSpotSelect }: MapProps) {
     }
   }, [reviewedSpots, onSpotSelect]);
 
+  // Add click handler to map
+  useEffect(() => {
+    if (!map) return;
+
+    map.addListener('click', () => {
+      if (activeInfoWindowRef.current) {
+        activeInfoWindowRef.current.close();
+        activeInfoWindowRef.current = null;
+      }
+    });
+
+    return () => {
+      google.maps.event.clearListeners(map, 'click');
+    };
+  }, [map]);
+
   // Add markers when spots data is loaded
   useEffect(() => {
     if (!map || !reviewedSpots.length || !unreviewed.length) return;
 
     // Clear existing markers
     markers.forEach((marker: google.maps.Marker) => marker.setMap(null));
-    if (activeInfoWindow) activeInfoWindow.close();
+    if (activeInfoWindowRef.current) {
+      activeInfoWindowRef.current.close();
+      activeInfoWindowRef.current = null;
+    }
 
     const bounds = new google.maps.LatLngBounds();
     const newMarkers: google.maps.Marker[] = [];
@@ -224,11 +244,22 @@ function MapComponent({ onSpotSelect }: MapProps) {
             `
           });
 
-          // Add click handler for marker - now just opens info window
+          // Add click handler for marker
           marker.addListener('click', () => {
-            if (activeInfoWindow) activeInfoWindow.close();
+            console.log('Marker clicked:', spot.name);
+            console.log('Current active window ref:', activeInfoWindowRef.current);
+            
+            // Close any existing info window
+            if (activeInfoWindowRef.current) {
+              console.log('Closing existing info window');
+              activeInfoWindowRef.current.close();
+              activeInfoWindowRef.current = null;
+            }
+            
+            // Open this info window
+            console.log('Opening new info window for:', spot.name);
             infoWindow.open(map, marker);
-            setActiveInfoWindow(infoWindow);
+            activeInfoWindowRef.current = infoWindow;
           });
 
           newMarkers.push(marker);
@@ -316,9 +347,20 @@ function MapComponent({ onSpotSelect }: MapProps) {
 
           // Add click handler
           marker.addListener('click', () => {
-            if (activeInfoWindow) activeInfoWindow.close();
+            console.log('Unreviewed marker clicked:', spot.name);
+            console.log('Current active window ref:', activeInfoWindowRef.current);
+            
+            // Close any existing info window
+            if (activeInfoWindowRef.current) {
+              console.log('Closing existing info window');
+              activeInfoWindowRef.current.close();
+              activeInfoWindowRef.current = null;
+            }
+            
+            // Open this info window
+            console.log('Opening new info window for:', spot.name);
             infoWindow.open(map, marker);
-            setActiveInfoWindow(infoWindow);
+            activeInfoWindowRef.current = infoWindow;
           });
 
           newMarkers.push(marker);
@@ -338,6 +380,10 @@ function MapComponent({ onSpotSelect }: MapProps) {
 
     return () => {
       newMarkers.forEach((marker: google.maps.Marker) => marker.setMap(null));
+      if (activeInfoWindowRef.current) {
+        activeInfoWindowRef.current.close();
+        activeInfoWindowRef.current = null;
+      }
       if (window.handleVote) delete window.handleVote;
       if (window.handleSpotSelect) delete window.handleSpotSelect;
     };
@@ -364,33 +410,41 @@ function MapComponent({ onSpotSelect }: MapProps) {
         </div>
       </div>
 
-      <div className="relative w-full h-[480px] rounded-lg overflow-hidden">
-        <div ref={mapRef} className="w-full h-full" />
-        {loading && (
-          <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-            <div className="animate-spin">
-              <FontAwesomeIcon icon={faDrumstickBite} className="w-8 h-8 text-deep-orange-500" />
+      <div className="flex gap-6">
+        <div className="flex-1">
+          <div className="relative w-full h-[480px] rounded-lg overflow-hidden">
+            <div ref={mapRef} className="w-full h-full" />
+            {loading && (
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                <div className="animate-spin">
+                  <FontAwesomeIcon icon={faDrumstickBite} className="w-8 h-8 text-deep-orange-500" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center gap-6 items-center text-sm bg-white/90 py-2 px-4 rounded-full shadow-sm mt-4">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
+              <span className="font-medium">I gotta tell someone bout this (8+)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm"></div>
+              <span className="font-medium">Yum City, population you (5-7)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm"></div>
+              <span className="font-medium">Hopefully there's also a game on (&lt;5)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
+              <span className="font-medium">On the list</span>
             </div>
           </div>
-        )}
-      </div>
+        </div>
 
-      <div className="flex justify-center gap-6 items-center text-sm bg-white/90 py-2 px-4 rounded-full shadow-sm">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
-          <span className="font-medium">I gotta tell someone bout this (8+)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm"></div>
-          <span className="font-medium">Yum City, population you (5-7)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm"></div>
-          <span className="font-medium">Hopefully there's also a game on (&lt;5)</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
-          <span className="font-medium">On the list</span>
+        <div className="w-80">
+          <TopVotedSpots spots={unreviewed.filter(spot => !spot.checkedOut)} />
         </div>
       </div>
     </div>
