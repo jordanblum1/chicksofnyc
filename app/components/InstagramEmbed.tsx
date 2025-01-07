@@ -25,16 +25,21 @@ export default function InstagramEmbed() {
       const script = document.createElement('script');
       script.src = '//www.instagram.com/embed.js';
       script.async = true;
-      document.body.appendChild(script);
-
+      
       script.onload = () => {
         if (window.instgrm) {
           window.instgrm.Embeds.process();
         }
       };
+
+      document.body.appendChild(script);
     };
 
-    loadInstagramEmbed();
+    if (!document.querySelector('script[src*="instagram.com/embed.js"]')) {
+      loadInstagramEmbed();
+    } else if (window.instgrm) {
+      window.instgrm.Embeds.process();
+    }
 
     return () => {
       const script = document.querySelector('script[src*="instagram.com/embed.js"]');
@@ -45,7 +50,11 @@ export default function InstagramEmbed() {
   }, [isMounted]);
 
   if (!isMounted) {
-    return <div className="card h-full animate-pulse bg-gray-100"></div>;
+    return (
+      <div className="card h-full animate-pulse bg-gray-100 flex items-center justify-center">
+        <div className="text-gray-400">Loading Instagram feed...</div>
+      </div>
+    );
   }
 
   return (

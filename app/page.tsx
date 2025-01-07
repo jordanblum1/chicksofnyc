@@ -58,7 +58,7 @@ interface SelectedSpot {
 }
 
 export default function Home() {
-  const { spots: topSpots, loading, error } = useWingSpots<WingSpot>('/api/get-top-wings');
+  const { spots: topSpots, loading: spotsLoading, error } = useWingSpots<WingSpot>('/api/get-top-wings');
   const [selectedSpot, setSelectedSpot] = useState<SelectedSpot | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
@@ -102,38 +102,6 @@ export default function Home() {
 
     fetchPhotos();
   }, [selectedSpot]);
-
-  useEffect(() => {
-    // Only run in browser environment
-    if (typeof window === 'undefined') return;
-
-    const loadInstagramEmbed = () => {
-      const script = document.createElement('script');
-      script.src = '//www.instagram.com/embed.js';
-      script.async = true;
-      document.body.appendChild(script);
-
-      script.onload = () => {
-        if (window.instgrm) {
-          window.instgrm.Embeds.process();
-        }
-      };
-    };
-
-    // Check if script is already loaded
-    if (!document.querySelector('script[src*="instagram.com/embed.js"]')) {
-      loadInstagramEmbed();
-    } else if (window.instgrm) {
-      window.instgrm.Embeds.process();
-    }
-
-    return () => {
-      const script = document.querySelector('script[src*="instagram.com/embed.js"]');
-      if (script?.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
-  }, []);
 
   const handleSpotClick = (spot: SelectedSpot) => {
     setSelectedSpot(spot);
@@ -186,93 +154,104 @@ export default function Home() {
   return (
     <div className="page-container">
       <MenuBar />
-      <div className="content-container fade-in">
-        <div className="flex flex-col items-center mb-8">
-          <Image
-            src="/chicks-of-nyc-logo.png"
-            alt="NYC Chicks Logo"
-            width={400}
-            height={400}
-            priority
-            className="hover:scale-105 transition-transform duration-300"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="slide-up">
-            <h2 className="text-2xl font-bold mb-4 text-primary">Top Wing Spots</h2>
-            {loading && <p className="text-center">Loading top spots...</p>}
-            {error && <p className="text-center text-red-500">{error}</p>}
-            {topSpots.length > 0 && (
-              <div className="space-y-4">
-                {topSpots.map((spot, index) => (
-                  <div 
-                    key={spot.id}
-                    className="card p-4 hover:cursor-pointer"
-                    onClick={() => setSelectedSpot(spot)}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-semibold">#{index + 1} {spot.name}</h3>
-                      <span className={`text-lg font-bold ${
-                        spot.overallRanking < 5 ? 'text-red-500' : 
-                        spot.overallRanking >= 8 ? 'text-green-500' : 
-                        'text-yellow-500'
-                      }`}>
-                        {formatNumber(spot.overallRanking, 'overall')}/10
-                      </span>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-4">{spot.address}</p>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center gap-1.5">
-                          <FontAwesomeIcon 
-                            icon={faDroplet} 
-                            className="icon-sauce w-5 h-5"
-                            title="Sauce Rating"
-                          />
-                        </div>
-                        <span className="text-xs text-gray-500">Sauce</span>
-                        <span className="font-semibold text-secondary">{formatNumber(spot.sauce, 'sauce')}/10</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center gap-1.5">
-                          <FontAwesomeIcon 
-                            icon={faFire} 
-                            className="icon-crispy w-5 h-5"
-                            title="Crispy-ness Rating"
-                          />
-                        </div>
-                        <span className="text-xs text-gray-500">Crispy</span>
-                        <span className="font-semibold text-accent">{formatNumber(spot.crispyness, 'crispy')}/10</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="flex items-center gap-1.5">
-                          <FontAwesomeIcon 
-                            icon={faDrumstickBite} 
-                            className="icon-meat w-5 h-5"
-                            title="Meat Rating"
-                          />
-                        </div>
-                        <span className="text-xs text-gray-500">Meat</span>
-                        <span className="font-semibold text-primary-light">{formatNumber(spot.meat, 'meat')}/10</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="slide-up">
-            <h2 className="text-2xl font-bold mb-4 invisible">Spacer</h2>
-            <InstagramEmbed />
+      {spotsLoading ? (
+        <div className="min-h-[80vh] flex flex-col items-center justify-center">
+          <div className="flex items-center gap-3 text-4xl">
+            <span className="animate-bounce [animation-delay:-0.3s]">🍗</span>
+            <span className="animate-bounce [animation-delay:-0.2s]">.</span>
+            <span className="animate-bounce [animation-delay:-0.1s]">.</span>
+            <span className="animate-bounce">.</span>
+            <span className="animate-bounce [animation-delay:0.1s]">🍗</span>
           </div>
         </div>
+      ) : (
+        <div className="content-container fade-in">
+          <div className="flex flex-col items-center mb-8">
+            <Image
+              src="/chicks-of-nyc-logo.png"
+              alt="NYC Chicks Logo"
+              width={400}
+              height={400}
+              priority
+              className="hover:scale-105 transition-transform duration-300"
+            />
+          </div>
 
-        <div className="mt-8 card p-4 slide-up">
-          <WingMap onSpotSelect={(spot) => setSelectedSpot(spot)} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="slide-up">
+              <h2 className="text-2xl font-bold mb-4 text-primary">Top Wing Spots</h2>
+              {error && <p className="text-center text-red-500">{error}</p>}
+              {topSpots.length > 0 && (
+                <div className="space-y-4">
+                  {topSpots.map((spot, index) => (
+                    <div 
+                      key={spot.id}
+                      className="card p-4 hover:cursor-pointer"
+                      onClick={() => setSelectedSpot(spot)}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-semibold">#{index + 1} {spot.name}</h3>
+                        <span className={`text-lg font-bold ${
+                          spot.overallRanking < 5 ? 'text-red-500' : 
+                          spot.overallRanking >= 8 ? 'text-green-500' : 
+                          'text-yellow-500'
+                        }`}>
+                          {formatNumber(spot.overallRanking, 'overall')}/10
+                        </span>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-4">{spot.address}</p>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <FontAwesomeIcon 
+                              icon={faDroplet} 
+                              className="icon-sauce w-5 h-5"
+                              title="Sauce Rating"
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500">Sauce</span>
+                          <span className="font-semibold text-secondary">{formatNumber(spot.sauce, 'sauce')}/10</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <FontAwesomeIcon 
+                              icon={faFire} 
+                              className="icon-crispy w-5 h-5"
+                              title="Crispy-ness Rating"
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500">Crispy</span>
+                          <span className="font-semibold text-accent">{formatNumber(spot.crispyness, 'crispy')}/10</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="flex items-center gap-1.5">
+                            <FontAwesomeIcon 
+                              icon={faDrumstickBite} 
+                              className="icon-meat w-5 h-5"
+                              title="Meat Rating"
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500">Meat</span>
+                          <span className="font-semibold text-primary-light">{formatNumber(spot.meat, 'meat')}/10</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="slide-up">
+              <h2 className="text-2xl font-bold mb-4 invisible">Spacer</h2>
+              <InstagramEmbed />
+            </div>
+          </div>
+
+          <div className="mt-8 card p-4 slide-up">
+            <WingMap onSpotSelect={(spot) => setSelectedSpot(spot)} />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Photo Viewer Modal */}
       <Modal
