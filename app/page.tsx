@@ -157,11 +157,11 @@ export default function Home() {
       {spotsLoading ? (
         <div className="min-h-[80vh] flex flex-col items-center justify-center">
           <div className="flex items-center gap-3 text-4xl">
-            <span className="animate-bounce [animation-delay:-0.3s]">🍗</span>
+            <span className="animate-bounce [animation-delay:-0.3s]">&#127831;</span>
             <span className="animate-bounce [animation-delay:-0.2s]">.</span>
             <span className="animate-bounce [animation-delay:-0.1s]">.</span>
             <span className="animate-bounce">.</span>
-            <span className="animate-bounce [animation-delay:0.1s]">🍗</span>
+            <span className="animate-bounce [animation-delay:0.1s]">&#127831;</span>
           </div>
         </div>
       ) : (
@@ -313,7 +313,7 @@ export default function Home() {
                     {selectedSpot.name}
                   </h2>
                   <div className="animate-wing-flap">
-                    🍗
+                    &#127831;
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
@@ -398,7 +398,7 @@ export default function Home() {
               <div className="animate-slide-in-right">
                 <h3 className="text-lg font-semibold mb-3 text-deep-orange-500 flex items-center gap-2">
                   Photos
-                  <span className="animate-wing-flap text-sm">🍗</span>
+                  <span className="animate-wing-flap text-sm">&#127831;</span>
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                   {photos.map((photo, index) => (

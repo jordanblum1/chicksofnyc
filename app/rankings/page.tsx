@@ -293,7 +293,7 @@ export default function RankingsPage() {
                       {selectedSpot.name}
                     </h2>
                     <div className="animate-wing-flap">
-                      🍗
+                      &#127831;
                     </div>
                   </div>
                   {selectedSpot.instagram && (
@@ -367,7 +367,7 @@ export default function RankingsPage() {
                 <div className="animate-slide-in-right">
                   <h3 className="text-lg font-semibold mb-3 text-deep-orange-500 flex items-center gap-2">
                     Photos
-                    <span className="animate-wing-flap text-sm">🍗</span>
+                    <span className="animate-wing-flap text-sm">&#127831;</span>
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                     {photos.map((photo, index) => (

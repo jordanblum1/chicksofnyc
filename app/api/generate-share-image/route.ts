@@ -208,7 +208,7 @@ export async function POST(request: Request) {
     ctx.font = 'bold 32px Arial';
     ctx.fillStyle = '#000000';
     ctx.textAlign = 'center';
-    ctx.fillText('📍 ' + address, 540, addressY);
+    ctx.fillText('\u{1F4CD} ' + address, 540, addressY);
     ctx.restore();
 
     // Social info with more spacing but compact
@@ -221,7 +221,7 @@ export async function POST(request: Request) {
       ctx.font = 'bold 36px Arial';
       ctx.fillStyle = '#c2410c';
       ctx.textAlign = 'center';
-      ctx.fillText('📸 @' + instagram.replace('@', ''), 540, instagramY);
+      ctx.fillText('\u{1F4F8} @' + instagram.replace('@', ''), 540, instagramY);
       ctx.restore();
     }
 
@@ -230,7 +230,7 @@ export async function POST(request: Request) {
     ctx.font = 'bold 40px Arial';
     ctx.fillStyle = '#c2410c';
     ctx.textAlign = 'center';
-    ctx.fillText('🔥 chicksofnyc.com 🔥', 540, websiteY);
+    ctx.fillText('\u{1F357} chicksofnyc.com \u{1F357}', 540, websiteY);
     ctx.restore();
 
     // Convert canvas to buffer
