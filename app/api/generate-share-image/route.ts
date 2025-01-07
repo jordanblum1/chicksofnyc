@@ -234,7 +234,6 @@ export async function POST(request: Request) {
     ctx.textAlign = 'center';
     ctx.fillText('🍗', 500, websiteY);
     ctx.fillText('chicksofnyc.com', 540, websiteY);
-    ctx.fillText('🔥', 580, websiteY);
     ctx.restore();
 
     // Convert canvas to buffer
