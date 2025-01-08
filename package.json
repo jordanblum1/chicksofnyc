@@ -20,6 +20,7 @@
     "@mui/material": "^5.15.18",
     "@types/google.maps": "^3.58.1",
     "@vercel/analytics": "^1.4.1",
+    "@vercel/speed-insights": "^1.1.0",
     "airtable": "^0.12.2",
     "canvas": "^3.0.1",
     "lottie-react": "^2.4.0",
