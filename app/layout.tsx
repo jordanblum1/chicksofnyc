@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 
+import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import { Outfit, Quicksand } from "next/font/google";
 import "./globals.css";
@@ -26,7 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${quicksand.variable} ${outfit.variable} font-sans`}>{children}</body>
+      <body className={`${quicksand.variable} ${outfit.variable} font-sans`}>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
