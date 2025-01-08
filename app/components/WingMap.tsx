@@ -391,7 +391,7 @@ function MapComponent({ onSpotSelect }: MapProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
             <FontAwesomeIcon icon={faDrumstickBite} className="w-6 h-6 text-[#a65d2e]" />
@@ -410,9 +410,9 @@ function MapComponent({ onSpotSelect }: MapProps) {
         </div>
       </div>
 
-      <div className="flex gap-6">
-        <div className="flex-1">
-          <div className="relative w-full h-[480px] rounded-lg overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex-1 space-y-4">
+          <div className="relative w-full h-[400px] sm:h-[480px] rounded-lg overflow-hidden">
             <div ref={mapRef} className="w-full h-full" />
             {loading && (
               <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
@@ -423,27 +423,29 @@ function MapComponent({ onSpotSelect }: MapProps) {
             )}
           </div>
 
-          <div className="flex justify-center gap-6 items-center text-sm bg-white/90 py-2 px-4 rounded-full shadow-sm mt-4">
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
-              <span className="font-medium">I gotta tell someone bout this (8+)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm"></div>
-              <span className="font-medium">Yum City, population you (5-7)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm"></div>
-              <span className="font-medium">Hopefully there's also a game on (&lt;5)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
-              <span className="font-medium">On the list</span>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex flex-wrap justify-center gap-4 text-xs sm:text-sm bg-white/90 py-3 px-4 rounded-full shadow-sm">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
+                <span className="font-medium whitespace-nowrap">I gotta tell someone (8+)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm"></div>
+                <span className="font-medium whitespace-nowrap">Yum City (5-7)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500 shadow-sm"></div>
+                <span className="font-medium whitespace-nowrap">Game's on (&lt;5)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-gray-400 shadow-sm"></div>
+                <span className="font-medium whitespace-nowrap">On the list</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="w-80">
+        <div className="w-full lg:w-80">
           <TopVotedSpots spots={unreviewed.filter(spot => !spot.checkedOut)} />
         </div>
       </div>
