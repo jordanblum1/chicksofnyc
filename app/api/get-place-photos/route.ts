@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Simple in-memory cache
+const PHOTO_CACHE: { [key: string]: { photos: string[], timestamp: number } } = {};
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
 interface PlacePhoto {
   photo_reference: string;
 }
@@ -7,8 +11,8 @@ interface PlacePhoto {
 // Use the server-side API key for Places API
 const PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
-// 12 hours in seconds
-const CACHE_MAX_AGE = 60 * 60 * 12;
+// 24 hours in seconds for HTTP cache
+const CACHE_MAX_AGE = 60 * 60 * 24;
 
 // Configure route for dynamic usage
 export const dynamic = 'force-dynamic';
@@ -53,6 +57,7 @@ export async function GET(request: NextRequest) {
   try {
     const name = request.nextUrl.searchParams.get('name');
     const address = request.nextUrl.searchParams.get('address');
+    const isDeployment = process.env.VERCEL_ENV !== undefined;
 
     console.log('Received request for:', { name, address });
 
@@ -60,6 +65,42 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Name and address are required' },
         { status: 400 }
+      );
+    }
+
+    const cacheKey = `${name}-${address}`;
+    const now = Date.now();
+
+    // Check cache first
+    if (PHOTO_CACHE[cacheKey] && (now - PHOTO_CACHE[cacheKey].timestamp) < CACHE_DURATION) {
+      console.log('Returning cached photos for:', cacheKey);
+      return NextResponse.json(
+        { photos: PHOTO_CACHE[cacheKey].photos },
+        {
+          headers: {
+            'Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate`,
+            'CDN-Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}`,
+            'Vercel-CDN-Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}`,
+          }
+        }
+      );
+    }
+
+    // Only fetch new photos during deployment or if no cache exists
+    if (!isDeployment && PHOTO_CACHE[cacheKey]) {
+      console.log('Returning stale cached photos for:', cacheKey);
+      return NextResponse.json(
+        { 
+          photos: PHOTO_CACHE[cacheKey].photos,
+          isStale: true 
+        },
+        {
+          headers: {
+            'Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate`,
+            'CDN-Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}`,
+            'Vercel-CDN-Cache-Control': `public, s-maxage=${CACHE_MAX_AGE}`,
+          }
+        }
       );
     }
 
@@ -85,6 +126,12 @@ export async function GET(request: NextRequest) {
     ).then(urls => urls.filter((url): url is string => url !== null));
 
     console.log('Generated photo URLs:', photoUrls.length);
+
+    // Update cache
+    PHOTO_CACHE[cacheKey] = {
+      photos: photoUrls,
+      timestamp: now
+    };
 
     return NextResponse.json(
       { photos: photoUrls },

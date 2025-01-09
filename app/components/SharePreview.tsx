@@ -3,27 +3,27 @@ import Image from 'next/image';
 import Lottie from 'lottie-react';
 import wingAnimation from '../animations/wings.json';
 
-interface SharePreviewProps {
-  spotName: string;
+interface WingSpot {
+  id: string;
+  name: string;
   address: string;
-  overallRating: number;
-  sauceRating: number;
-  crispynessRating: number;
-  meatRating: number;
+  overallRanking: number;
+  sauce: number;
+  crispyness: number;
+  meat: number;
   instagram?: string;
+  mapUrl?: string;
+}
+
+interface SharePreviewProps {
+  spot: WingSpot;
   photoUrl: string;
   photos: string[];
   mapUrl: string;
 }
 
 export default function SharePreview({
-  spotName,
-  address,
-  overallRating,
-  sauceRating,
-  crispynessRating,
-  meatRating,
-  instagram,
+  spot,
   photoUrl,
   photos,
   mapUrl,
@@ -46,13 +46,13 @@ export default function SharePreview({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          spotName,
-          address,
-          overallRating,
-          sauceRating,
-          crispynessRating,
-          meatRating,
-          instagram,
+          spotName: spot.name,
+          address: spot.address,
+          overallRating: spot.overallRanking,
+          sauceRating: spot.sauce,
+          crispynessRating: spot.crispyness,
+          meatRating: spot.meat,
+          instagram: spot.instagram,
           photoUrl,
           photos,
           mapUrl,
@@ -78,7 +78,7 @@ export default function SharePreview({
 
     const a = document.createElement('a');
     a.href = previewUrl;
-    a.download = `${spotName.toLowerCase().replace(/\s+/g, '-')}-review.png`;
+    a.download = `${spot.name.toLowerCase().replace(/\s+/g, '-')}-review.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -106,7 +106,7 @@ export default function SharePreview({
   return (
     <div className="p-6 space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-deep-orange-500 mb-2">Share {spotName}</h2>
+        <h2 className="text-2xl font-bold text-deep-orange-500 mb-2">Share {spot.name}</h2>
         <p className="text-gray-600">Download or copy the image to share on Instagram</p>
       </div>
 
@@ -122,7 +122,7 @@ export default function SharePreview({
           <div className="relative aspect-[9/16] w-full max-w-md mx-auto overflow-hidden rounded-xl border-4 border-deep-orange-100">
             <Image
               src={previewUrl}
-              alt={`${spotName} review`}
+              alt={`${spot.name} review`}
               fill
               className="object-contain"
               unoptimized

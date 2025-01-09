@@ -1,83 +1,74 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
   isPhotoModal?: boolean;
-  onEscape?: () => void;
-  title?: string;
 }
 
-export default function Modal({ isOpen, onClose, children, isPhotoModal = false, onEscape, title }: ModalProps) {
+export default function Modal({ isOpen, onClose, children, isPhotoModal = false }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        e.preventDefault();
-        if (isPhotoModal) {
-          onClose();
-        } else if (!document.querySelector('[data-photo-modal="true"]')) {
-          onClose();
-        }
+        onClose();
       }
     };
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      if (!isPhotoModal) {
-        document.body.style.overflow = 'hidden';
-      }
+      document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      if (!isPhotoModal) {
-        document.body.style.overflow = 'unset';
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        onClose();
       }
     };
-  }, [isOpen, onClose, isPhotoModal]);
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  return (
-    <div 
-      className={`fixed inset-0 ${isPhotoModal ? 'z-50' : 'z-40'} flex items-start justify-center overflow-y-auto`}
-      data-photo-modal={isPhotoModal}
-      style={{ paddingTop: 'calc(64px + 1rem)', paddingBottom: '1rem' }}
-    >
-      <div 
-        className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300"
-        onClick={onClose}
-      />
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div 
         ref={modalRef}
         className={`
-          relative w-full max-w-4xl mx-4 
-          ${isPhotoModal ? 'bg-black' : 'bg-white/95 backdrop-blur-sm'} 
-          rounded-xl shadow-2xl 
-          transform transition-all duration-300 ease-out
-          animate-modal-slide-up
-          hover:shadow-[0_20px_50px_rgba(0,0,0,0.2)]
+          relative bg-white rounded-xl shadow-2xl w-full max-h-[90vh] overflow-y-auto
+          ${isPhotoModal ? 'max-w-6xl' : 'max-w-2xl'}
+          animate-modal-appear
         `}
-        style={{ minHeight: 'min-content', maxHeight: 'calc(100vh - 96px)' }}
       >
         <button
           onClick={onClose}
-          className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-lg text-gray-500 hover:text-gray-700 hover:scale-110 transition-all duration-200 z-10"
+          className="absolute top-2 right-2 z-10 p-2 text-gray-500 hover:text-gray-700 transition-colors"
           aria-label="Close modal"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <FontAwesomeIcon icon={faXmark} className="w-6 h-6" />
         </button>
-        <div className="overflow-y-auto max-h-[calc(100vh-96px)] rounded-xl">
-          <div className="transform transition-all duration-300 ease-out">
-            {children}
-          </div>
-        </div>
+        {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 } 

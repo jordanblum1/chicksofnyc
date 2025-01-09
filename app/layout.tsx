@@ -21,6 +21,22 @@ export const metadata: Metadata = {
   description: "Finding the best chicken wings in New York",
 };
 
+// Initialize cache during build time
+async function initCache() {
+  if (process.env.VERCEL_ENV) {
+    try {
+      const response = await fetch('/api/init-cache');
+      const data = await response.json();
+      console.log('Cache initialization result:', data);
+    } catch (error) {
+      console.error('Failed to initialize cache:', error);
+    }
+  }
+}
+
+// Call initCache during build
+initCache();
+
 export default function RootLayout({
   children,
 }: Readonly<{
