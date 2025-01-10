@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
   const startTime = performance.now();
   const searchParams = request.nextUrl.searchParams;
   const address = searchParams.get('address')?.trim();
-  const isDeployment = process.env.VERCEL_ENV !== undefined;
 
   if (!address) {
     return NextResponse.json(
@@ -38,22 +37,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       coordinates: cachedEntry.coordinates,
       fromCache: true,
-      cacheAge: now - cachedEntry.timestamp,
-      duration,
-    });
-  }
-
-  // Only geocode during deployment or if no cache exists
-  if (!isDeployment && cachedEntry) {
-    const duration = Math.round(performance.now() - startTime);
-    console.log(`[GEOCODE STALE CACHE] Address: "${address}" - Duration: ${duration}ms`);
-    console.log(`[GEOCODE DETAILS] Coordinates: ${JSON.stringify(cachedEntry.coordinates)}`);
-    console.log(`[GEOCODE CACHE AGE] ${Math.round((now - cachedEntry.timestamp) / (1000 * 60 * 60))} hours old`);
-    
-    return NextResponse.json({
-      coordinates: cachedEntry.coordinates,
-      fromCache: true,
-      isStale: true,
       cacheAge: now - cachedEntry.timestamp,
       duration,
     });

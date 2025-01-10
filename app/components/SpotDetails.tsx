@@ -28,16 +28,39 @@ interface SpotDetailsProps {
 export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: SpotDetailsProps) {
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const [loadingPhotos, setLoadingPhotos] = useState(true);
 
   useEffect(() => {
     const fetchMapUrl = async () => {
       try {
-        const response = await fetch(`/api/cache-map-url?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`);
+        // First, get geocoding data
+        console.log(`[GEOCODING] Fetching for address: "${spot.address}"`);
+        const geocodeResponse = await fetch(
+          `/api/geocode-location?address=${encodeURIComponent(spot.address)}`
+        );
+        const geocodeData = await geocodeResponse.json();
+        
+        if (geocodeData.error) {
+          console.error(`[GEOCODING ERROR] ${spot.name}: ${geocodeData.error}`);
+        } else {
+          const status = geocodeData.fromCache ? 'CACHE HIT' : 'FRESH DATA';
+          const age = geocodeData.cacheAge ? 
+            ` (${Math.round(geocodeData.cacheAge / (1000 * 60 * 60))} hours old)` : 
+            '';
+          console.log(`[GEOCODING ${status}] ${spot.name}${age}`);
+          console.log(`[GEOCODING COORDS] ${JSON.stringify(geocodeData.coordinates)}`);
+        }
+
+        // Then get map URL
+        const response = await fetch(
+          `/api/cache-map-url?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`
+        );
         const data = await response.json();
         setMapUrl(data.url);
-        console.log(`Map URL ${data.fromCache ? 'loaded from cache' : 'generated'} in ${data.duration}ms`);
+        const mapStatus = data.fromCache ? 'CACHE HIT' : 'FRESH DATA';
+        console.log(`[MAP ${mapStatus}] ${spot.name} - Duration: ${data.duration}ms`);
       } catch (error) {
-        console.error('Error fetching map URL:', error);
+        console.error('[MAP ERROR] Failed to fetch map URL:', error);
       } finally {
         setIsMapLoading(false);
       }
@@ -45,6 +68,40 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
 
     fetchMapUrl();
   }, [spot.name, spot.address]);
+
+  useEffect(() => {
+    async function fetchPhotos() {
+      if (!spot) return;
+      
+      setLoadingPhotos(true);
+      try {
+        console.log(`[SPOT DETAILS] Fetching photos for: ${spot.name}`);
+        const response = await fetch(
+          `/api/get-place-photos?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`
+        );
+        const data = await response.json();
+        
+        if (data.error) {
+          console.error(`[PHOTOS ERROR] ${spot.name}: ${data.error}`);
+        } else {
+          const status = data.fromCache ? 
+            (data.isStale ? 'STALE CACHE' : 'CACHE HIT') : 
+            'FRESH DATA';
+          const age = data.cacheAge ? 
+            ` (${Math.round(data.cacheAge / (1000 * 60 * 60))} hours old)` : 
+            '';
+          console.log(`[PHOTOS ${status}] ${spot.name}${age}`);
+          console.log(`[PHOTOS COUNT] ${data.photos.length} photos loaded in ${data.duration}ms`);
+        }
+      } catch (error) {
+        console.error('[PHOTOS ERROR] Failed to fetch photos:', error);
+      } finally {
+        setLoadingPhotos(false);
+      }
+    }
+
+    fetchPhotos();
+  }, [spot]);
 
   return (
     <div className="p-6 space-y-4">

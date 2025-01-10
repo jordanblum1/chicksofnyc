@@ -25,11 +25,19 @@ export const metadata: Metadata = {
 async function initCache() {
   if (process.env.VERCEL_ENV) {
     try {
-      const response = await fetch('/api/init-cache');
+      const baseUrl = process.env.VERCEL_URL ? 
+        `https://${process.env.VERCEL_URL}` : 
+        process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
+      console.log('[CACHE INIT] Starting cache initialization...');
+      const response = await fetch(`${baseUrl}/api/init-cache`);
+      if (!response.ok) {
+        throw new Error(`Failed to initialize cache: ${response.status} ${response.statusText}`);
+      }
       const data = await response.json();
-      console.log('Cache initialization result:', data);
+      console.log('[CACHE INIT] Result:', data);
     } catch (error) {
-      console.error('Failed to initialize cache:', error);
+      console.error('[CACHE INIT] Failed:', error);
     }
   }
 }
