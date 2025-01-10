@@ -16,9 +16,16 @@ export async function GET() {
     });
     const wingsData = await wingsResponse.json();
 
-    // Prime the cache for each spot's photos and map
+    // Prime the cache for each spot's photos, map, and geocoding
     const spots = wingsData.data;
     for (const spot of spots) {
+      // Prime geocoding cache first
+      await fetch(`${process.env.VERCEL_URL}/api/geocode-location?address=${encodeURIComponent(spot.address)}`, {
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+
       // Prime photos cache
       await fetch(`${process.env.VERCEL_URL}/api/get-place-photos?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`, {
         headers: {
