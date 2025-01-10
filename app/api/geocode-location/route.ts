@@ -44,15 +44,31 @@ export async function GET(request: NextRequest) {
 
   try {
     console.log(`[GEOCODE API CALL] Fetching fresh coordinates for: "${address}"`);
+    
+    // Use NEXT_PUBLIC_GOOGLE_MAPS_API_KEY for geocoding
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      console.error('[GEOCODE ERROR] Missing Google Maps API key');
+      throw new Error('Missing Google Maps API key');
+    }
+
     // Geocode the address
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.GOOGLE_PLACES_API_KEY}`
-    );
+    const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
+    console.log(`[GEOCODE REQUEST] URL: ${geocodeUrl.replace(apiKey, 'REDACTED')}`);
+    
+    const response = await fetch(geocodeUrl);
+    if (!response.ok) {
+      console.error(`[GEOCODE ERROR] HTTP error: ${response.status} ${response.statusText}`);
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
     const data = await response.json();
+    console.log(`[GEOCODE RESPONSE] Status: ${data.status}, Results: ${data.results?.length || 0}`);
 
     if (data.status !== 'OK' || !data.results?.[0]?.geometry?.location) {
       console.error(`[GEOCODE ERROR] Failed to geocode address: "${address}" - Status: ${data.status}`);
-      throw new Error('Failed to geocode address');
+      console.error('[GEOCODE ERROR] Full response:', JSON.stringify(data));
+      throw new Error(`Failed to geocode address: ${data.status}`);
     }
 
     const coordinates = data.results[0].geometry.location;
@@ -73,9 +89,12 @@ export async function GET(request: NextRequest) {
       duration,
     });
   } catch (error) {
-    console.error('[GEOCODE ERROR]', error);
+    console.error('[GEOCODE ERROR] Detailed error:', error);
     return NextResponse.json(
-      { error: 'Failed to geocode address' },
+      { 
+        error: 'Failed to geocode address',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
