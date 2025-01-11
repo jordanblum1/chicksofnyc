@@ -49,7 +49,8 @@ function MapComponent({ onSpotSelect }: MapProps) {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const activeInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
-  const [showSubmitForm, setShowSubmitForm] = useState(false);
+  const boundsRef = useRef<google.maps.LatLngBounds | null>(null);
+  const newMarkersRef = useRef<google.maps.Marker[]>([]);
 
   // Initialize map
   useEffect(() => {
@@ -92,6 +93,7 @@ function MapComponent({ onSpotSelect }: MapProps) {
 
     const newMap = new google.maps.Map(mapRef.current, mapOptions);
     setMap(newMap);
+    boundsRef.current = new google.maps.LatLngBounds();
   }, [mapRef]);
 
   const handleVote = useCallback(async (spotId: string) => {
@@ -157,9 +159,135 @@ function MapComponent({ onSpotSelect }: MapProps) {
     };
   }, [map]);
 
+  // Helper function to add marker to map
+  const addMarkerToMap = useCallback((spot: ReviewedSpot | UnreviewedSpot, position: google.maps.LatLngLiteral, isReviewed: boolean) => {
+    if (!map || !boundsRef.current) return;
+
+    boundsRef.current.extend(position);
+
+    const markerOptions: google.maps.Symbol = {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: isReviewed ? 12 : 10,
+      fillColor: isReviewed ? 
+        ((spot as ReviewedSpot).overallRanking >= 8 ? '#22c55e' : 
+         (spot as ReviewedSpot).overallRanking >= 5 ? '#eab308' : 
+         '#ef4444') :
+        '#9ca3af',
+      fillOpacity: 1,
+      strokeWeight: 2,
+      strokeColor: '#ffffff'
+    };
+
+    const marker = new google.maps.Marker({
+      position,
+      map,
+      animation: initialLoadRef.current ? google.maps.Animation.DROP : undefined,
+      icon: markerOptions,
+      title: spot.name
+    });
+
+    // Add hover effect
+    marker.addListener('mouseover', () => {
+      marker.setOptions({
+        icon: {
+          ...marker.getIcon() as google.maps.Symbol,
+          scale: (marker.getIcon() as google.maps.Symbol).scale! * 1.2
+        }
+      });
+    });
+
+    marker.addListener('mouseout', () => {
+      marker.setOptions({
+        icon: markerOptions
+      });
+    });
+
+    // Create info window content
+    const infoWindow = new google.maps.InfoWindow({
+      content: isReviewed ? 
+        `
+          <div class="p-2 min-w-[200px]">
+            <div class="bg-deep-orange-50/50 rounded-t-lg p-2 -mt-2 -mx-2 mb-2">
+              <h3 class="font-bold text-lg">${spot.name}</h3>
+            </div>
+            <div class="flex items-center justify-between mb-2 gap-4">
+              <p class="text-sm text-gray-600 pr-2">${spot.address}</p>
+              <span class="font-semibold text-${
+                (spot as ReviewedSpot).overallRanking >= 8 ? 'green' : 
+                (spot as ReviewedSpot).overallRanking >= 5 ? 'yellow' : 
+                'red'
+              }-500 text-lg whitespace-nowrap">${Number((spot as ReviewedSpot).overallRanking).toFixed(1)}/10</span>
+            </div>
+            <button 
+              onclick="window.handleSpotSelect('${spot.id}')"
+              class="text-xs text-deep-orange-500 mt-1 hover:text-deep-orange-600 transition-colors cursor-pointer w-full text-left"
+            >
+              Click to view details →
+            </button>
+          </div>
+        ` :
+        `
+          <div class="p-2 min-w-[200px]">
+            <div class="space-y-3">
+              <div>
+                <h3 class="font-bold text-lg mb-1">${spot.name}</h3>
+                <p class="text-sm text-gray-600">${spot.address}</p>
+              </div>
+              <div class="bg-deep-orange-50/50 rounded-lg p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <p class="font-medium text-deep-orange-600 text-sm">Should we check it out?</p>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-deep-orange-500">${(spot as UnreviewedSpot).votes}</span>
+                    <button 
+                      onclick="window.handleVote('${spot.id}')"
+                      class="text-deep-orange-500 hover:text-deep-orange-600 transition-colors rounded-full hover:bg-deep-orange-100 p-1.5 -mr-1"
+                      id="vote-btn-${spot.id}"
+                      ${localStorage.getItem(`voted-${spot.id}`) ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
+                    >
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M2 20.4V13h2v7.4h-2zM20.1 13c.6 0 .9.4.9 1v1l-2.1 4.9c-.2.6-.8 1-1.4 1H9c-.8 0-1.5-.7-1.5-1.5v-5c0-.4.2-.8.4-1.1L13.5 8h2.6l-2.1 5h6.1z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <p class="text-xs text-gray-500">Vote to help us prioritize our next review!</p>
+              </div>
+            </div>
+          </div>
+        `
+    });
+
+    // Add click handler
+    marker.addListener('click', () => {
+      console.log(`${isReviewed ? 'Reviewed' : 'Unreviewed'} marker clicked:`, spot.name);
+      console.log('Current active window ref:', activeInfoWindowRef.current);
+      
+      // Close any existing info window
+      if (activeInfoWindowRef.current) {
+        console.log('Closing existing info window');
+        activeInfoWindowRef.current.close();
+        activeInfoWindowRef.current = null;
+      }
+      
+      // Open this info window
+      console.log('Opening new info window for:', spot.name);
+      infoWindow.open(map, marker);
+      activeInfoWindowRef.current = infoWindow;
+    });
+
+    newMarkersRef.current.push(marker);
+
+    // Fit bounds after all markers are added
+    if (newMarkersRef.current.length === reviewedSpots.length + unreviewed.filter(s => !s.checkedOut).length) {
+      map.fitBounds(boundsRef.current);
+    }
+  }, [map, reviewedSpots.length, unreviewed]);
+
   // Add markers when spots data is loaded
   useEffect(() => {
     if (!map || !reviewedSpots.length || !unreviewed.length) return;
+
+    console.log('[MAP] Adding markers for wing spots...');
 
     // Clear existing markers
     markers.forEach((marker: google.maps.Marker) => marker.setMap(null));
@@ -168,8 +296,9 @@ function MapComponent({ onSpotSelect }: MapProps) {
       activeInfoWindowRef.current = null;
     }
 
-    const bounds = new google.maps.LatLngBounds();
-    const newMarkers: google.maps.Marker[] = [];
+    // Reset markers and bounds
+    newMarkersRef.current = [];
+    boundsRef.current = new google.maps.LatLngBounds();
 
     // Add global handlers
     window.handleVote = handleVote;
@@ -179,92 +308,50 @@ function MapComponent({ onSpotSelect }: MapProps) {
     reviewedSpots.forEach(spot => {
       const geocoder = new google.maps.Geocoder();
       
-      geocoder.geocode({ address: spot.address }, (results, status) => {
-        if (status === 'OK' && results?.[0]?.geometry?.location) {
-          const position = results[0].geometry.location;
-          bounds.extend(position);
+      // Check Redis cache
+      fetch(`/api/cache-geocode?address=${encodeURIComponent(spot.address)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.fromCache) {
+            console.log(`[MAP] ✓ Using cached coordinates for "${spot.name}"`);
+            addMarkerToMap(spot, data.coordinates, true);
+          } else {
+            console.log(`[MAP] Cache miss for "${spot.name}" - geocoding address`);
+            // Geocode and cache the result
+            geocoder.geocode({ address: spot.address }, (results, status) => {
+              if (status === 'OK' && results?.[0]?.geometry?.location) {
+                const position = results[0].geometry.location.toJSON();
+                
+                // Cache the coordinates
+                fetch('/api/cache-geocode', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    address: spot.address,
+                    coordinates: position,
+                  }),
+                })
+                .then(() => console.log(`[MAP] → Cached new coordinates for "${spot.name}"`))
+                .catch(error => console.error(`[MAP] ✗ Failed to cache coordinates for "${spot.name}":`, error));
 
-          const markerOptions: google.maps.Symbol = {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 12,
-            fillColor: spot.overallRanking >= 8 ? '#22c55e' : 
-                      spot.overallRanking >= 5 ? '#eab308' : 
-                      '#ef4444',
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: '#ffffff'
-          };
-
-          const marker = new google.maps.Marker({
-            position,
-            map,
-            animation: initialLoadRef.current ? google.maps.Animation.DROP : undefined,
-            icon: markerOptions,
-            title: spot.name
-          });
-
-          // Add hover effect
-          marker.addListener('mouseover', () => {
-            marker.setOptions({
-              icon: {
-                ...marker.getIcon() as google.maps.Symbol,
-                scale: (marker.getIcon() as google.maps.Symbol).scale! * 1.2
+                addMarkerToMap(spot, position, true);
               }
             });
-          });
-
-          marker.addListener('mouseout', () => {
-            marker.setOptions({
-              icon: markerOptions
-            });
-          });
-
-          // Create info window content for reviewed spots
-          const infoWindow = new google.maps.InfoWindow({
-            content: `
-              <div class="p-2 min-w-[200px]">
-                <div class="bg-deep-orange-50/50 rounded-t-lg p-2 -mt-2 -mx-2 mb-2">
-                  <h3 class="font-bold text-lg">${spot.name}</h3>
-                </div>
-                <div class="flex items-center justify-between mb-2 gap-4">
-                  <p class="text-sm text-gray-600 pr-2">${spot.address}</p>
-                  <span class="font-semibold text-${
-                    spot.overallRanking >= 8 ? 'green' : 
-                    spot.overallRanking >= 5 ? 'yellow' : 
-                    'red'
-                  }-500 text-lg whitespace-nowrap">${Number(spot.overallRanking).toFixed(1)}/10</span>
-                </div>
-                <button 
-                  onclick="window.handleSpotSelect('${spot.id}')"
-                  class="text-xs text-deep-orange-500 mt-1 hover:text-deep-orange-600 transition-colors cursor-pointer w-full text-left"
-                >
-                  Click to view details →
-                </button>
-              </div>
-            `
-          });
-
-          // Add click handler for marker
-          marker.addListener('click', () => {
-            console.log('Marker clicked:', spot.name);
-            console.log('Current active window ref:', activeInfoWindowRef.current);
-            
-            // Close any existing info window
-            if (activeInfoWindowRef.current) {
-              console.log('Closing existing info window');
-              activeInfoWindowRef.current.close();
-              activeInfoWindowRef.current = null;
+          }
+        })
+        .catch(error => {
+          console.error(`[MAP] ✗ Error checking geocode cache for "${spot.name}":`, error);
+          // Fallback to direct geocoding
+          geocoder.geocode({ address: spot.address }, (results, status) => {
+            if (status === 'OK' && results?.[0]?.geometry?.location) {
+              console.log(`[MAP] ⚠ Fallback to direct geocoding for "${spot.name}"`);
+              const position = results[0].geometry.location.toJSON();
+              addMarkerToMap(spot, position, true);
             }
-            
-            // Open this info window
-            console.log('Opening new info window for:', spot.name);
-            infoWindow.open(map, marker);
-            activeInfoWindowRef.current = infoWindow;
           });
-
-          newMarkers.push(marker);
-        }
-      });
+        });
     });
 
     // Add unreviewed spots
@@ -274,112 +361,60 @@ function MapComponent({ onSpotSelect }: MapProps) {
 
       const geocoder = new google.maps.Geocoder();
       
-      geocoder.geocode({ address: spot.address }, (results, status) => {
-        if (status === 'OK' && results?.[0]?.geometry?.location) {
-          const position = results[0].geometry.location;
-          bounds.extend(position);
+      // Check Redis cache
+      fetch(`/api/cache-geocode?address=${encodeURIComponent(spot.address)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.fromCache) {
+            console.log(`[MAP] ✓ Using cached coordinates for "${spot.name}" (unreviewed)`);
+            addMarkerToMap(spot, data.coordinates, false);
+          } else {
+            console.log(`[MAP] Cache miss for "${spot.name}" - geocoding address (unreviewed)`);
+            // Geocode and cache the result
+            geocoder.geocode({ address: spot.address }, (results, status) => {
+              if (status === 'OK' && results?.[0]?.geometry?.location) {
+                const position = results[0].geometry.location.toJSON();
+                
+                // Cache the coordinates
+                fetch('/api/cache-geocode', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    address: spot.address,
+                    coordinates: position,
+                  }),
+                })
+                .then(() => console.log(`[MAP] → Cached new coordinates for "${spot.name}" (unreviewed)`))
+                .catch(error => console.error(`[MAP] ✗ Failed to cache coordinates for "${spot.name}":`, error));
 
-          const markerOptions: google.maps.Symbol = {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: '#9ca3af',
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: '#ffffff'
-          };
-
-          const marker = new google.maps.Marker({
-            position,
-            map,
-            animation: initialLoadRef.current ? google.maps.Animation.DROP : undefined,
-            icon: markerOptions,
-            title: spot.name
-          });
-
-          // Add hover effect
-          marker.addListener('mouseover', () => {
-            marker.setOptions({
-              icon: {
-                ...marker.getIcon() as google.maps.Symbol,
-                scale: (marker.getIcon() as google.maps.Symbol).scale! * 1.2
+                addMarkerToMap(spot, position, false);
               }
             });
-          });
-
-          marker.addListener('mouseout', () => {
-            marker.setOptions({
-              icon: markerOptions
-            });
-          });
-
-          // Create info window content for unreviewed spots
-          const infoWindow = new google.maps.InfoWindow({
-            content: `
-              <div class="p-2 min-w-[200px]">
-                <div class="space-y-3">
-                  <div>
-                    <h3 class="font-bold text-lg mb-1">${spot.name}</h3>
-                    <p class="text-sm text-gray-600">${spot.address}</p>
-                  </div>
-                  <div class="bg-deep-orange-50/50 rounded-lg p-3 space-y-2">
-                    <div class="flex items-center justify-between">
-                      <p class="font-medium text-deep-orange-600 text-sm">Should we check it out?</p>
-                      <div class="flex items-center gap-2">
-                        <span class="text-sm font-medium text-deep-orange-500">${spot.votes}</span>
-                        <button 
-                          onclick="window.handleVote('${spot.id}')"
-                          class="text-deep-orange-500 hover:text-deep-orange-600 transition-colors rounded-full hover:bg-deep-orange-100 p-1.5 -mr-1"
-                          id="vote-btn-${spot.id}"
-                          ${localStorage.getItem(`voted-${spot.id}`) ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
-                        >
-                          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M2 20.4V13h2v7.4h-2zM20.1 13c.6 0 .9.4.9 1v1l-2.1 4.9c-.2.6-.8 1-1.4 1H9c-.8 0-1.5-.7-1.5-1.5v-5c0-.4.2-.8.4-1.1L13.5 8h2.6l-2.1 5h6.1z"/>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <p class="text-xs text-gray-500">Vote to help us prioritize our next review!</p>
-                  </div>
-                </div>
-              </div>
-            `
-          });
-
-          // Add click handler
-          marker.addListener('click', () => {
-            console.log('Unreviewed marker clicked:', spot.name);
-            console.log('Current active window ref:', activeInfoWindowRef.current);
-            
-            // Close any existing info window
-            if (activeInfoWindowRef.current) {
-              console.log('Closing existing info window');
-              activeInfoWindowRef.current.close();
-              activeInfoWindowRef.current = null;
+          }
+        })
+        .catch(error => {
+          console.error(`[MAP] ✗ Error checking geocode cache for "${spot.name}":`, error);
+          // Fallback to direct geocoding
+          geocoder.geocode({ address: spot.address }, (results, status) => {
+            if (status === 'OK' && results?.[0]?.geometry?.location) {
+              console.log(`[MAP] ⚠ Fallback to direct geocoding for "${spot.name}" (unreviewed)`);
+              const position = results[0].geometry.location.toJSON();
+              addMarkerToMap(spot, position, false);
             }
-            
-            // Open this info window
-            console.log('Opening new info window for:', spot.name);
-            infoWindow.open(map, marker);
-            activeInfoWindowRef.current = infoWindow;
           });
-
-          newMarkers.push(marker);
-        }
-      });
+        });
     });
 
     // Set initialLoadRef to false after first render
     initialLoadRef.current = false;
 
-    setMarkers(newMarkers);
-
-    // Fit bounds after all markers are added
-    if (newMarkers.length === reviewedSpots.length + unreviewed.length) {
-      map.fitBounds(bounds);
-    }
+    // Update markers state
+    setMarkers(newMarkersRef.current);
 
     return () => {
-      newMarkers.forEach((marker: google.maps.Marker) => marker.setMap(null));
+      newMarkersRef.current.forEach((marker: google.maps.Marker) => marker.setMap(null));
       if (activeInfoWindowRef.current) {
         activeInfoWindowRef.current.close();
         activeInfoWindowRef.current = null;
@@ -387,7 +422,7 @@ function MapComponent({ onSpotSelect }: MapProps) {
       if (window.handleVote) delete window.handleVote;
       if (window.handleSpotSelect) delete window.handleSpotSelect;
     };
-  }, [map, reviewedSpots, unreviewed, handleVote, handleSpotSelect]);
+  }, [map, reviewedSpots, unreviewed, handleVote, handleSpotSelect, addMarkerToMap]);
 
   return (
     <div className="space-y-4">

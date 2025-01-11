@@ -22,86 +22,80 @@ export function useWingSpots<T extends WingSpot>(endpoint: string) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function fetchSpots() {
+    const fetchSpots = async () => {
       try {
-        console.log('[SPOTS] Fetching spots from:', endpoint);
+        setLoading(true);
         const response = await fetch(endpoint);
-        const result = await response.json();
-
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to fetch spots');
-        }
-
-        console.log(`[SPOTS] Found ${result.data.length} spots to process`);
-        const spotsWithData = await Promise.all(
-          result.data.map(async (spot: T) => {
-            try {
-              // First, get geocoding data
-              console.log(`\n[SPOT: ${spot.name}] Starting data fetch...`);
-              console.log(`[GEOCODING] Fetching for address: "${spot.address}"`);
-              
-              const geocodeResponse = await fetch(
-                `/api/geocode-location?address=${encodeURIComponent(spot.address)}`
-              );
-              const geocodeData = await geocodeResponse.json();
-              
-              if (geocodeData.error) {
-                console.error(`[GEOCODING ERROR] ${spot.name}: ${geocodeData.error}`);
-              } else {
-                const status = geocodeData.fromCache ? 
-                  (geocodeData.isStale ? 'STALE CACHE' : 'CACHE HIT') : 
-                  'FRESH DATA';
-                const age = geocodeData.cacheAge ? 
-                  ` (${Math.round(geocodeData.cacheAge / (1000 * 60 * 60))} hours old)` : 
-                  '';
-                console.log(`[GEOCODING ${status}] ${spot.name}${age}`);
-                console.log(`[GEOCODING COORDS] ${JSON.stringify(geocodeData.coordinates)}`);
-              }
-
-              // Then, get map URL using the cached geocode
-              console.log(`[MAP] Fetching for: ${spot.name}`);
-              const mapResponse = await fetch(
-                `/api/cache-map-url?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`
-              );
-              const mapData = await mapResponse.json();
-              const mapStatus = mapData.fromCache ? 
-                (mapData.isStale ? 'STALE CACHE' : 'CACHE HIT') : 
-                'FRESH DATA';
-              console.log(`[MAP ${mapStatus}] ${spot.name}`);
-
-              return { 
-                ...spot, 
-                mapUrl: mapData.url,
-                coordinates: geocodeData.coordinates
+        const data = await response.json();
+        
+        console.log(`[SPOTS] Processing ${data.data.length} wing spots`);
+        
+        // Process each spot to add coordinates
+        const spotsWithCoords = await Promise.all(data.data.map(async (spot: T) => {
+          try {
+            // Check Redis cache first
+            const cacheResponse = await fetch(
+              `/api/cache-geocode?address=${encodeURIComponent(spot.address)}`
+            );
+            const cacheData = await cacheResponse.json();
+            
+            if (cacheData.fromCache) {
+              console.log(`[GEOCODE] ✓ Cache hit for "${spot.name}" (${spot.address})`);
+              return {
+                ...spot,
+                coordinates: cacheData.coordinates
               };
-            } catch (err) {
-              console.error(`[ERROR] Failed to fetch data for ${spot.name}:`, err);
-              return spot;
             }
-          })
-        );
-
-        if (isMounted) {
-          console.log('[SPOTS] All spot data processed successfully');
-          setSpots(spotsWithData);
-          setLoading(false);
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error('[ERROR] Failed to fetch spots:', err);
-          setError(err instanceof Error ? err.message : 'An error occurred');
-          setLoading(false);
-        }
+            
+            console.log(`[GEOCODE] Cache miss for "${spot.name}" - using Google Maps API`);
+            
+            // If not in cache, use Google Maps Geocoder
+            const geocoder = new google.maps.Geocoder();
+            const results = await new Promise((resolve, reject) => {
+              geocoder.geocode({ address: spot.address }, (results, status) => {
+                if (status === 'OK' && results?.[0]?.geometry?.location) {
+                  resolve(results);
+                } else {
+                  reject(new Error(`Geocoding failed: ${status}`));
+                }
+              });
+            });
+            
+            const position = (results as any)[0].geometry.location.toJSON();
+            
+            // Cache the result
+            await fetch('/api/cache-geocode', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                address: spot.address,
+                coordinates: position,
+              }),
+            });
+            
+            console.log(`[GEOCODE] → Cached new coordinates for "${spot.name}"`);
+            
+            return {
+              ...spot,
+              coordinates: position
+            };
+          } catch (error) {
+            console.error(`[GEOCODE] ✗ Error processing "${spot.name}":`, error);
+            return spot;
+          }
+        }));
+        
+        setSpots(spotsWithCoords);
+      } catch (error) {
+        console.error('[SPOTS] Error fetching spots:', error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
     fetchSpots();
-
-    return () => {
-      isMounted = false;
-    };
   }, [endpoint]);
 
   return { spots, loading, error };

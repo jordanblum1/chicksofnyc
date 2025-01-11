@@ -29,38 +29,78 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [mapUrl, setMapUrl] = useState<string | null>(null);
   const [loadingPhotos, setLoadingPhotos] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [coordinates, setCoordinates] = useState<google.maps.LatLngLiteral | null>(null);
+
+  useEffect(() => {
+    if (!spot) return;
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Check Redis cache first
+        const cacheResponse = await fetch(
+          `/api/cache-geocode?address=${encodeURIComponent(spot.address)}`
+        );
+        const cacheData = await cacheResponse.json();
+        
+        if (cacheData.fromCache) {
+          console.log(`[SPOT] ✓ Using cached coordinates for "${spot.name}"`);
+          setCoordinates(cacheData.coordinates);
+        } else {
+          console.log(`[SPOT] Cache miss for "${spot.name}" - geocoding address`);
+          // If not in cache, use Google Maps Geocoder
+          const geocoder = new google.maps.Geocoder();
+          const results = await new Promise((resolve, reject) => {
+            geocoder.geocode({ address: spot.address }, (results, status) => {
+              if (status === 'OK' && results?.[0]?.geometry?.location) {
+                resolve(results);
+              } else {
+                reject(new Error(`Geocoding failed: ${status}`));
+              }
+            });
+          });
+          
+          const position = (results as any)[0].geometry.location.toJSON();
+          
+          // Cache the result
+          await fetch('/api/cache-geocode', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              address: spot.address,
+              coordinates: position,
+            }),
+          });
+          
+          console.log(`[SPOT] → Cached new coordinates for "${spot.name}"`);
+          setCoordinates(position);
+        }
+      } catch (error) {
+        console.error(`[SPOT] ✗ Error fetching coordinates for "${spot.name}":`, error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [spot]);
 
   useEffect(() => {
     const fetchMapUrl = async () => {
       try {
-        // First, get geocoding data
-        console.log(`[GEOCODING] Fetching for address: "${spot.address}"`);
-        const geocodeResponse = await fetch(
-          `/api/geocode-location?address=${encodeURIComponent(spot.address)}`
-        );
-        const geocodeData = await geocodeResponse.json();
-        
-        if (geocodeData.error) {
-          console.error(`[GEOCODING ERROR] ${spot.name}: ${geocodeData.error}`);
-        } else {
-          const status = geocodeData.fromCache ? 'CACHE HIT' : 'FRESH DATA';
-          const age = geocodeData.cacheAge ? 
-            ` (${Math.round(geocodeData.cacheAge / (1000 * 60 * 60))} hours old)` : 
-            '';
-          console.log(`[GEOCODING ${status}] ${spot.name}${age}`);
-          console.log(`[GEOCODING COORDS] ${JSON.stringify(geocodeData.coordinates)}`);
-        }
-
-        // Then get map URL
+        // Get map URL
         const response = await fetch(
           `/api/cache-map-url?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`
         );
         const data = await response.json();
         setMapUrl(data.url);
-        const mapStatus = data.fromCache ? 'CACHE HIT' : 'FRESH DATA';
-        console.log(`[MAP ${mapStatus}] ${spot.name} - Duration: ${data.duration}ms`);
+        console.log(`[SPOT] ${data.fromCache ? '✓ Using cached' : '→ Generated new'} map URL for "${spot.name}"`);
       } catch (error) {
-        console.error('[MAP ERROR] Failed to fetch map URL:', error);
+        console.error(`[SPOT] ✗ Failed to fetch map URL for "${spot.name}":`, error);
       } finally {
         setIsMapLoading(false);
       }

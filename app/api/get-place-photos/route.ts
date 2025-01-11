@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { kv } from '@vercel/kv';
 
-// Simple in-memory cache
-const PHOTO_CACHE: { [key: string]: { photos: string[], timestamp: number } } = {};
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const CACHE_PREFIX = 'photos_';
+const CACHE_DURATION = 24 * 60 * 60; // 24 hours in seconds
 
 interface PlacePhoto {
   photo_reference: string;
@@ -68,25 +68,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const cacheKey = `${name}-${address}`.toLowerCase();
-    const now = Date.now();
+    const cacheKey = `${CACHE_PREFIX}${name}-${address}`.toLowerCase();
+    const now = Math.floor(Date.now() / 1000); // Current time in seconds
 
-    // Check cache first
-    if (PHOTO_CACHE[cacheKey] && (now - PHOTO_CACHE[cacheKey].timestamp) < CACHE_DURATION) {
+    // Check Redis cache first
+    const cachedEntry = await kv.get(cacheKey);
+
+    if (cachedEntry) {
       const duration = Math.round(performance.now() - startTime);
-      const cacheAge = Math.round((now - PHOTO_CACHE[cacheKey].timestamp) / (1000 * 60 * 60));
+      const cacheAge = (now - (cachedEntry as any).timestamp) * 1000; // Convert to milliseconds
+      const cacheHours = Math.round(cacheAge / (1000 * 60 * 60));
       console.log(`[PHOTOS CACHE HIT] "${name}" - Duration: ${duration}ms`);
-      console.log(`[PHOTOS CACHE AGE] ${cacheAge} hours old`);
-      console.log(`[PHOTOS COUNT] ${PHOTO_CACHE[cacheKey].photos.length} photos`);
+      console.log(`[PHOTOS CACHE AGE] ${cacheHours} hours old`);
+      console.log(`[PHOTOS COUNT] ${(cachedEntry as any).photos.length} photos`);
       
-      return NextResponse.json(
-        { 
-          photos: PHOTO_CACHE[cacheKey].photos,
-          fromCache: true,
-          cacheAge: now - PHOTO_CACHE[cacheKey].timestamp,
-          duration 
-        }
-      );
+      return NextResponse.json({ 
+        photos: (cachedEntry as any).photos,
+        fromCache: true,
+        cacheAge,
+        duration 
+      });
     }
 
     if (!process.env.GOOGLE_PLACES_API_KEY) {
@@ -117,22 +118,22 @@ export async function GET(request: NextRequest) {
 
     console.log(`[PHOTOS API] Generated ${photoUrls.length} photo URLs for: "${name}"`);
 
-    // Update cache
-    PHOTO_CACHE[cacheKey] = {
+    // Cache in Redis with expiration
+    await kv.set(cacheKey, {
       photos: photoUrls,
       timestamp: now
-    };
+    }, {
+      ex: CACHE_DURATION // Set expiration in seconds
+    });
 
     const duration = Math.round(performance.now() - startTime);
     console.log(`[PHOTOS COMPLETE] Duration: ${duration}ms`);
 
-    return NextResponse.json(
-      { 
-        photos: photoUrls,
-        fromCache: false,
-        duration 
-      }
-    );
+    return NextResponse.json({ 
+      photos: photoUrls,
+      fromCache: false,
+      duration 
+    });
   } catch (error) {
     console.error('[PHOTOS ERROR] Failed to fetch photos:', error);
     return NextResponse.json(

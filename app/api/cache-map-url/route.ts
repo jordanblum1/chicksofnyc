@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { kv } from '@vercel/kv';
 
-interface CacheEntry {
-  url: string;
-  timestamp: number;
-}
-
-const MAP_CACHE: { [key: string]: CacheEntry } = {};
-const CACHE_DURATION = 10 * 24 * 60 * 60 * 1000; // 10 days in milliseconds
+const CACHE_PREFIX = 'map_';
+const CACHE_DURATION = 10 * 24 * 60 * 60; // 10 days in seconds
 
 export async function GET(request: NextRequest) {
   const startTime = performance.now();
@@ -22,15 +18,17 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const cacheKey = `${name}|${address}`;
-  const cachedEntry = MAP_CACHE[cacheKey];
-  const now = Date.now();
+  const cacheKey = `${CACHE_PREFIX}${name}|${address}`.toLowerCase();
+  const now = Math.floor(Date.now() / 1000); // Current time in seconds
+
+  // Check Redis cache first
+  const cachedEntry = await kv.get(cacheKey);
 
   // Check if we have a valid cached entry
-  if (cachedEntry && (now - cachedEntry.timestamp) < CACHE_DURATION) {
+  if (cachedEntry) {
     const duration = Math.round(performance.now() - startTime);
     return NextResponse.json({
-      url: cachedEntry.url,
+      url: (cachedEntry as any).url,
       fromCache: true,
       duration,
     });
@@ -41,7 +39,7 @@ export async function GET(request: NextRequest) {
     // Return the expired cache entry but mark it as stale
     const duration = Math.round(performance.now() - startTime);
     return NextResponse.json({
-      url: cachedEntry.url,
+      url: (cachedEntry as any).url,
       fromCache: true,
       isStale: true,
       duration,
@@ -51,11 +49,13 @@ export async function GET(request: NextRequest) {
   // Generate the map URL
   const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(name + ' ' + address)}`;
 
-  // Cache the result
-  MAP_CACHE[cacheKey] = {
+  // Cache the result in Redis with expiration
+  await kv.set(cacheKey, {
     url: mapUrl,
     timestamp: now,
-  };
+  }, {
+    ex: CACHE_DURATION // Set expiration in seconds
+  });
 
   const duration = Math.round(performance.now() - startTime);
   return NextResponse.json({

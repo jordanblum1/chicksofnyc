@@ -1,4 +1,13 @@
 import { NextResponse } from 'next/server';
+import { kv } from '@vercel/kv';
+
+const GEO_CACHE_PREFIX = 'geo_';
+const MAP_CACHE_PREFIX = 'map_';
+const PHOTOS_CACHE_PREFIX = 'photos_';
+
+const GEO_CACHE_DURATION = 30 * 24 * 60 * 60; // 30 days in seconds
+const MAP_CACHE_DURATION = 10 * 24 * 60 * 60; // 10 days in seconds
+const PHOTOS_CACHE_DURATION = 24 * 60 * 60; // 24 hours in seconds
 
 // This endpoint will only be called during build/deployment time
 export async function GET() {
@@ -31,38 +40,84 @@ export async function GET() {
 
     // Prime the cache for each spot's photos and map
     const spots = wingsData.data;
+    const now = Math.floor(Date.now() / 1000); // Current time in seconds
+    const results = [];
+
     for (const spot of spots) {
       try {
         console.log(`[CACHE INIT] Processing spot: ${spot.name}`);
         
-        // Prime photos cache
-        const photosResponse = await fetch(
-          `${baseUrl}/api/get-place-photos?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`,
-          {
-            headers: {
-              'Cache-Control': 'no-cache'
-            }
-          }
-        );
-        if (!photosResponse.ok) {
-          console.error(`[CACHE INIT] Failed to cache photos for ${spot.name}: ${photosResponse.status}`);
+        // Prime map cache
+        const mapCacheKey = `${MAP_CACHE_PREFIX}${spot.name}|${spot.address}`.toLowerCase();
+        const existingMap = await kv.get(mapCacheKey);
+        
+        if (!existingMap) {
+          const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(spot.name + ' ' + spot.address)}`;
+          await kv.set(mapCacheKey, {
+            url: mapUrl,
+            timestamp: now
+          }, {
+            ex: MAP_CACHE_DURATION
+          });
+          console.log(`[CACHE INIT] Cached map URL for: ${spot.name}`);
         }
 
-        // Prime map cache
-        const mapResponse = await fetch(
-          `${baseUrl}/api/cache-map-url?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`,
-          {
-            headers: {
-              'Cache-Control': 'no-cache'
+        // Prime photos cache
+        const photosCacheKey = `${PHOTOS_CACHE_PREFIX}${spot.name}-${spot.address}`.toLowerCase();
+        const existingPhotos = await kv.get(photosCacheKey);
+        
+        if (!existingPhotos) {
+          const query = `${spot.name} ${spot.address}`;
+          const placeResponse = await fetch(
+            `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${encodeURIComponent(query)}&inputtype=textquery&fields=place_id&key=${process.env.GOOGLE_PLACES_API_KEY}`
+          );
+          
+          if (placeResponse.ok) {
+            const placeData = await placeResponse.json();
+            const placeId = placeData.candidates?.[0]?.place_id;
+            
+            if (placeId) {
+              const detailsResponse = await fetch(
+                `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=photos&key=${process.env.GOOGLE_PLACES_API_KEY}`
+              );
+              
+              if (detailsResponse.ok) {
+                const detailsData = await detailsResponse.json();
+                const photos = detailsData.result?.photos || [];
+                
+                const photoUrls = await Promise.all(
+                  photos
+                    .slice(0, 6)
+                    .map(async (photo: any) => {
+                      const photoResponse = await fetch(
+                        `https://maps.googleapis.com/maps/api/place/photo?maxheight=400&photo_reference=${photo.photo_reference}&key=${process.env.GOOGLE_PLACES_API_KEY}`,
+                        { redirect: 'manual' }
+                      );
+                      return photoResponse.headers.get('location');
+                    })
+                ).then(urls => urls.filter((url): url is string => url !== null));
+
+                if (photoUrls.length > 0) {
+                  await kv.set(photosCacheKey, {
+                    photos: photoUrls,
+                    timestamp: now
+                  }, {
+                    ex: PHOTOS_CACHE_DURATION
+                  });
+                  console.log(`[CACHE INIT] Cached ${photoUrls.length} photos for: ${spot.name}`);
+                }
+              }
             }
           }
-        );
-        if (!mapResponse.ok) {
-          console.error(`[CACHE INIT] Failed to cache map for ${spot.name}: ${mapResponse.status}`);
         }
+
+        results.push({ name: spot.name, status: 'success' });
+        
+        // Add a small delay between spots to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (spotError) {
         console.error(`[CACHE INIT] Error processing spot ${spot.name}:`, spotError);
-        // Continue with next spot even if one fails
+        results.push({ name: spot.name, status: 'error', error: spotError instanceof Error ? spotError.message : 'Unknown error' });
         continue;
       }
     }
@@ -71,6 +126,7 @@ export async function GET() {
       success: true, 
       message: 'Cache initialized successfully',
       spotsProcessed: spots.length,
+      results,
       baseUrl
     });
   } catch (error) {
