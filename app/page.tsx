@@ -49,12 +49,22 @@ interface WingSpot {
   mapUrl?: string;
 }
 
+interface UnreviewedSpot {
+  id: string;
+  name: string;
+  address: string;
+  votes: number;
+  checkedOut: boolean;
+}
+
 interface SelectedSpot extends WingSpot {
   mapUrl?: string;
 }
 
 export default function Home() {
   const { spots: topSpots, loading: spotsLoading, error } = useWingSpots<WingSpot>('/api/get-top-wings');
+  const { spots: allSpots, loading: allSpotsLoading } = useWingSpots<WingSpot>('/api/get-all-wings');
+  const { spots: unreviewedSpots, loading: unreviewedLoading } = useWingSpots<UnreviewedSpot>('/api/get-all-spots');
   const [selectedSpot, setSelectedSpot] = useState<SelectedSpot | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
@@ -254,7 +264,12 @@ export default function Home() {
           </div>
 
           <div className="mt-8 card p-4 slide-up">
-            <WingMap onSpotSelect={(spot) => setSelectedSpot(spot)} />
+            <WingMap 
+              onSpotSelect={(spot) => setSelectedSpot(spot)} 
+              reviewedSpots={allSpots}
+              unreviewedSpots={unreviewedSpots}
+              loading={allSpotsLoading || unreviewedLoading}
+            />
           </div>
         </div>
       )}

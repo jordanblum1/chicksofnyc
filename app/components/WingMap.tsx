@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Wrapper } from "@googlemaps/react-wrapper";
-import { useWingSpots } from '../hooks/useWingSpots';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDrumstickBite, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import { TopVotedSpots } from './TopVotedSpots';
 
 interface MapProps {
   onSpotSelect: (spot: ReviewedSpot) => void;
+  reviewedSpots: ReviewedSpot[];
+  unreviewedSpots: UnreviewedSpot[];
+  loading?: boolean;
 }
 
 interface WingSpot {
@@ -41,11 +43,9 @@ interface UnreviewedSpot {
   checkedOut: boolean;
 }
 
-function MapComponent({ onSpotSelect }: MapProps) {
+function MapComponent({ onSpotSelect, reviewedSpots, unreviewedSpots: unreviewed, loading }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const initialLoadRef = useRef(true);
-  const { spots: reviewedSpots } = useWingSpots<ReviewedSpot>('/api/get-all-wings');
-  const { spots: unreviewed, loading } = useWingSpots<UnreviewedSpot>('/api/get-all-spots');
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const activeInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
@@ -141,7 +141,7 @@ function MapComponent({ onSpotSelect }: MapProps) {
     if (spot) {
       onSpotSelect(spot);
     }
-  }, [reviewedSpots, onSpotSelect]);
+  }, []);
 
   // Add click handler to map
   useEffect(() => {
@@ -281,13 +281,16 @@ function MapComponent({ onSpotSelect }: MapProps) {
     if (newMarkersRef.current.length === reviewedSpots.length + unreviewed.filter(s => !s.checkedOut).length) {
       map.fitBounds(boundsRef.current);
     }
-  }, [map, reviewedSpots.length, unreviewed]);
+  }, [map]);
 
   // Add markers when spots data is loaded
   useEffect(() => {
-    if (!map || !reviewedSpots.length || !unreviewed.length) return;
+    if (!map || loading) return;
+    if (!reviewedSpots?.length && !unreviewed?.length) return;
 
     console.log('[MAP] Adding markers for wing spots...');
+    console.log('[MAP] Reviewed spots:', reviewedSpots.length);
+    console.log('[MAP] Unreviewed spots:', unreviewed.length);
 
     // Clear existing markers
     markers.forEach((marker: google.maps.Marker) => marker.setMap(null));
@@ -422,7 +425,7 @@ function MapComponent({ onSpotSelect }: MapProps) {
       if (window.handleVote) delete window.handleVote;
       if (window.handleSpotSelect) delete window.handleSpotSelect;
     };
-  }, [map, reviewedSpots, unreviewed, handleVote, handleSpotSelect, addMarkerToMap]);
+  }, [map, loading, reviewedSpots, unreviewed]);
 
   return (
     <div className="space-y-4">
@@ -496,10 +499,15 @@ declare global {
   }
 }
 
-export default function WingMap({ onSpotSelect }: MapProps) {
+export default function WingMap({ onSpotSelect, reviewedSpots, unreviewedSpots, loading }: MapProps) {
   return (
     <Wrapper apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
-      <MapComponent onSpotSelect={onSpotSelect} />
+      <MapComponent 
+        onSpotSelect={onSpotSelect} 
+        reviewedSpots={reviewedSpots} 
+        unreviewedSpots={unreviewedSpots}
+        loading={loading}
+      />
     </Wrapper>
   );
 } 
