@@ -240,7 +240,11 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
                            hover:border-deep-orange-300 transition-all duration-300
                            shadow-md hover:shadow-xl animate-border-pulse
                            md:aspect-w-4 md:aspect-h-3"
-                onClick={() => onPhotoClick(photo, index)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onPhotoClick(photo, index);
+                }}
               >
                 <Image
                   src={photo}

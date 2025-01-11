@@ -88,15 +88,25 @@ export default function RankingsPage() {
   const sliderSettings: Settings = {
     dots: false,
     infinite: true,
-    speed: 300,
+    speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
     swipe: true,
+    swipeToSlide: true,
     arrows: true,
-    afterChange: (current) => {
-      setSelectedPhotoIndex(current);
-      setSelectedPhoto(photos[current]);
-    }
+    adaptiveHeight: false,
+    beforeChange: (current, next) => {
+      setSelectedPhotoIndex(next);
+      setSelectedPhoto(photos[next]);
+    },
+    responsive: [
+      {
+        breakpoint: 768,
+        settings: {
+          arrows: false
+        }
+      }
+    ]
   };
 
   const swipeHandlers = useSwipeable({
@@ -299,34 +309,94 @@ export default function RankingsPage() {
           isPhotoModal={true}
         >
           {selectedPhoto && (
-            <div className="p-2 md:p-0">
-              <div className="relative min-h-[50vh] md:min-h-[75vh] flex items-center">
-                <div className="w-full" {...swipeHandlers}>
-                  <Slider 
-                    {...sliderSettings} 
-                    ref={sliderRef}
-                  >
-                    {photos.map((photo, index) => (
-                      <div key={index} className="outline-none">
-                        <div className="flex items-center justify-center min-h-[50vh] md:min-h-[75vh] px-4">
-                          <Image
-                            src={photo}
-                            alt={`${selectedSpot?.name} photo ${index + 1}`}
-                            width={1200}
-                            height={800}
-                            className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg"
-                            priority={index === selectedPhotoIndex}
-                            unoptimized
-                          />
-                        </div>
+            <div 
+              className="relative min-h-[50vh] md:min-h-[75vh] flex items-center justify-center"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <div 
+                className="w-full max-w-[90vw]"
+                {...swipeHandlers}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                <Slider 
+                  {...sliderSettings} 
+                  ref={sliderRef}
+                  initialSlide={selectedPhotoIndex}
+                >
+                  {photos.map((photo, index) => (
+                    <div 
+                      key={index} 
+                      className="outline-none"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                    >
+                      <div 
+                        className="flex items-center justify-center min-h-[50vh] md:min-h-[75vh] px-4"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Image
+                          src={photo}
+                          alt={`${selectedSpot?.name} photo ${index + 1}`}
+                          width={1200}
+                          height={800}
+                          className="max-w-full h-auto max-h-[75vh] object-contain rounded-lg select-none"
+                          priority={index === selectedPhotoIndex}
+                          unoptimized
+                          draggable={false}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                        />
                       </div>
-                    ))}
-                  </Slider>
-                </div>
-                
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-md text-sm z-10">
-                  {selectedPhotoIndex + 1} / {photos.length}
-                </div>
+                    </div>
+                  ))}
+                </Slider>
+              </div>
+              
+              <div 
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-md text-sm z-10"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                {selectedPhotoIndex + 1} / {photos.length}
               </div>
             </div>
           )}
