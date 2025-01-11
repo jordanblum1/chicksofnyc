@@ -64,7 +64,7 @@ export default function About() {
                 </Link>
                 !
               </p>
-              <p className="text-lg leading-relaxed text-gray-700">
+              {/* <p className="text-lg leading-relaxed text-gray-700">
                 Also you want to learn more about me or my other projects, feel free to start at{' '}
                 <Link 
                   href="https://blumblumblum.com" 
@@ -75,7 +75,7 @@ export default function About() {
                   blumblumblum.com
                 </Link>
                 .
-              </p>
+              </p> */}
             </div>
           </section>
 
