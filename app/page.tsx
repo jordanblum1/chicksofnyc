@@ -383,6 +383,7 @@ export default function Home() {
         onClose={() => {
           setSelectedSpot(null);
           setPhotos([]);
+          setIsSharing(false);  // Also close share modal if open
         }}
       >
         {selectedSpot && (
@@ -401,7 +402,10 @@ export default function Home() {
       {/* Share Preview Modal */}
       <Modal
         isOpen={isSharing}
-        onClose={() => setIsSharing(false)}
+        onClose={() => {
+          setIsSharing(false);
+        }}
+        isPhotoModal
       >
         {selectedSpot && photos.length > 0 && (
           <SharePreview

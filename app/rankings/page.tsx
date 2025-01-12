@@ -289,7 +289,14 @@ export default function RankingsPage() {
 
         {/* Spot Details Modal */}
         {selectedSpot && (
-          <Modal isOpen={!!selectedSpot} onClose={handleCloseSpot}>
+          <Modal 
+            isOpen={!!selectedSpot} 
+            onClose={() => {
+              setSelectedSpot(null);
+              setPhotos([]);
+              setIsSharing(false);  // Also close share modal if open
+            }}
+          >
             <SpotDetails
               spot={selectedSpot}
               photos={photos}
@@ -404,7 +411,13 @@ export default function RankingsPage() {
 
         {/* Share Preview Modal */}
         {isSharing && selectedSpot && photos.length > 0 && (
-          <Modal isOpen={isSharing} onClose={() => setIsSharing(false)} isPhotoModal>
+          <Modal 
+            isOpen={isSharing} 
+            onClose={() => {
+              setIsSharing(false);
+            }} 
+            isPhotoModal
+          >
             <SharePreview
               spot={selectedSpot}
               photoUrl={photos[0] || ''}
