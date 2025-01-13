@@ -60,7 +60,7 @@ export default function InstagramEmbed() {
   return (
     <blockquote 
       className="instagram-media card h-full" 
-      data-instgrm-permalink="https://www.instagram.com/chicksofnewyorkcity/"
+      data-instgrm-permalink="https://www.instagram.com/chicksofnyc/"
       data-instgrm-version="14"
       style={{ 
         border: '0',

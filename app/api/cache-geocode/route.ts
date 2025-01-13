@@ -4,6 +4,21 @@ import { kv } from '@vercel/kv';
 const CACHE_PREFIX = 'geo_';
 const CACHE_DURATION = 30 * 24 * 60 * 60; // 30 days in seconds
 
+// Helper to format time duration
+function formatDuration(seconds: number): string {
+  const days = Math.floor(seconds / (24 * 60 * 60));
+  const hours = Math.floor((seconds % (24 * 60 * 60)) / (60 * 60));
+  if (days > 0) return `${days}d ${hours}h`;
+  return `${hours}h`;
+}
+
+// Bundle multiple address logs
+function logAddressBatch(addresses: string[], status: 'hit' | 'miss', cacheAges?: number[]) {
+  const statusSymbol = status === 'hit' ? '✓' : '✗';
+  const ageInfo = cacheAges ? ` (ages: ${cacheAges.map(age => formatDuration(age)).join(', ')})` : '';
+  console.log(`[GEOCODE] ${statusSymbol} Cache ${status} for addresses: "${addresses.join('", "')}"${ageInfo}`);
+}
+
 export async function POST(request: Request) {
   try {
     const { address, coordinates } = await request.json();
@@ -54,16 +69,19 @@ export async function GET(request: NextRequest) {
 
     const cacheKey = `${CACHE_PREFIX}${address.toLowerCase()}`;
     const cachedEntry = await kv.get(cacheKey);
+    const now = Math.floor(Date.now() / 1000);
 
     if (cachedEntry) {
-      console.log(`[GEOCODE] ✓ Cache hit for address: "${address}"`);
+      const cacheAge = now - (cachedEntry as any).timestamp;
+      logAddressBatch([address], 'hit', [cacheAge]);
       return NextResponse.json({
         coordinates: (cachedEntry as any).coordinates,
         fromCache: true,
+        cacheAge,
       });
     }
 
-    console.log(`[GEOCODE] ✗ Cache miss for address: "${address}"`);
+    logAddressBatch([address], 'miss');
     return NextResponse.json({ fromCache: false });
   } catch (error) {
     console.error('[GEOCODE] ✗ Cache error:', error);
