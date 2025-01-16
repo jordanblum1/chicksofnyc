@@ -23,7 +23,7 @@ export default function InstagramEmbed() {
 
     const loadInstagramEmbed = () => {
       const script = document.createElement('script');
-      script.src = '//www.instagram.com/embed.js';
+      script.src = 'https://www.instagram.com/embed.js';
       script.async = true;
       
       script.onload = () => {
@@ -51,26 +51,20 @@ export default function InstagramEmbed() {
 
   if (!isMounted) {
     return (
-      <div className="card h-full animate-pulse bg-gray-100 flex items-center justify-center">
+      <div className="card min-h-[450px] animate-pulse bg-gray-100 flex items-center justify-center">
         <div className="text-gray-400">Loading Instagram feed...</div>
       </div>
     );
   }
 
   return (
-    <blockquote 
-      className="instagram-media card h-full" 
-      data-instgrm-permalink="https://www.instagram.com/chicksofnyc/"
-      data-instgrm-version="14"
-      style={{ 
-        border: '0',
-        margin: '1px',
-        maxWidth: '100%',
-        minWidth: '326px',
-        padding: '0',
-        width: '99.375%',
-        height: '93%'
-      }}
-    ></blockquote>
+    <div className="card overflow-hidden mb-8">
+      <iframe
+        src="https://www.instagram.com/chicksofnyc/embed"
+        className="w-full min-h-[450px] md:min-h-[500px] border-none"
+        loading="lazy"
+        allowFullScreen
+      ></iframe>
+    </div>
   );
 } 
