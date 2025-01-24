@@ -19,6 +19,33 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "Chicks of NYC",
   description: "Finding the best chicken wings in New York",
+  openGraph: {
+    title: "Chicks of NYC",
+    description: "Finding the best chicken wings in New York",
+    type: "website",
+    url: "https://chicksofnyc.com",
+    siteName: "Chicks of NYC",
+    images: [
+      {
+        url: "/chicks-of-nyc-logo.gif",
+        width: 600,
+        height: 315,
+        alt: "Chicks of NYC - Animated Logo",
+        type: "image/gif",
+      },
+      {
+        url: "/chicks-of-nyc-logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Chicks of NYC Logo",
+      }
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Chicks of NYC",
+    description: "Finding the best chicken wings in New York",
+  },
 };
 
 // Initialize cache during build time
