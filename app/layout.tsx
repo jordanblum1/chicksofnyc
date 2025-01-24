@@ -28,11 +28,12 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/chicks-of-nyc-logo.gif",
-        width: 600,
-        height: 315,
+        width: 400,
+        height: 210,
         alt: "Chicks of NYC - Animated Logo",
         type: "image/gif",
       },
+      // Fallback static image (keep this larger for social media)
       {
         url: "/chicks-of-nyc-logo.png",
         width: 1200,
