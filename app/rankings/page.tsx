@@ -212,7 +212,7 @@ export default function RankingsPage() {
                   {spots.map((spot, index) => (
                     <tr 
                       key={spot.id}
-                      className="border-b hover:bg-primary/5 transition-colors cursor-pointer"
+                      className="border-b cursor-pointer transition-all duration-300 hover:bg-primary/5 hover:translate-x-2 hover:shadow-[-4px_0_0] hover:shadow-primary"
                       onClick={() => handleSpotClick(spot)}
                     >
                       <td className="px-6 py-4 font-medium">#{index + 1}</td>

@@ -373,3 +373,69 @@ h2 {
   transform-origin: center;
   display: inline-block;
 }
+
+/* Ranking list hover effects */
+.ranking-row {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.ranking-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  opacity: 0;
+  z-index: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ranking-row:hover::before {
+  opacity: 0.05;
+}
+
+.ranking-row:hover {
+  transform: translateX(4px);
+  box-shadow: -4px 0 0 var(--primary);
+}
+
+.ranking-row > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mobile ranking item hover */
+.ranking-item-mobile {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.ranking-item-mobile::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  opacity: 0;
+  z-index: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ranking-item-mobile:hover::before {
+  opacity: 0.05;
+}
+
+.ranking-item-mobile:hover {
+  transform: translateX(4px);
+  box-shadow: -4px 0 0 var(--primary);
+}
+
+.ranking-item-mobile > * {
+  position: relative;
+  z-index: 1;
+}
