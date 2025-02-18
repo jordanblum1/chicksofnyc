@@ -24,6 +24,7 @@ export default function About() {
                 height={120}
                 priority
                 className="rounded-lg"
+                unoptimized={true}
               />
             </div>
             <div>
