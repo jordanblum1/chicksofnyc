@@ -179,10 +179,15 @@ h2 {
 /* Animation classes */
 .fade-in {
   animation: fadeIn 0.5s ease-out forwards;
+  contain: layout style;
 }
 
 .slide-up {
+  opacity: 0;
   animation: slideUp 0.5s ease-out forwards;
+  animation-delay: var(--delay, 0s);
+  contain: layout style;
+  transform: translateZ(0);
 }
 
 @keyframes fadeIn {
@@ -193,12 +198,28 @@ h2 {
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(20px) translateZ(0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) translateZ(0);
   }
+}
+
+/* Wing flap animation optimization */
+@keyframes wing-flap {
+  0%, 100% { 
+    transform: rotate(-5deg) translateZ(0);
+  }
+  50% { 
+    transform: rotate(5deg) translateZ(0);
+  }
+}
+
+.animate-wing-flap {
+  animation: wing-flap 2s ease-in-out infinite;
+  contain: layout style;
+  transform: translateZ(0);
 }
 
 /* Header section styles */

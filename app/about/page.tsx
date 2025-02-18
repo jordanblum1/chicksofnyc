@@ -1,4 +1,6 @@
-'use client';
+export const dynamic = 'force-static';
+export const revalidate = 3600; // Revalidate every hour
+
 import MenuBar from '../components/MenuBar';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -13,18 +15,30 @@ export default function About() {
       <MenuBar />
       <div className="content-container fade-in">
         <section className="card page-header p-8 mb-8">
-          <div className="relative z-10">
-            <h1 className="text-4xl font-bold text-white font-heading">About the Wing Man</h1>
-            <p className="text-white/90 mt-2 text-lg">Discovering NYC's Hidden Wing Gems</p>
+          <div className="relative z-10 flex items-center gap-6">
+            <div className="flex-shrink-0 hidden sm:block">
+              <Image
+                src="/chicks-of-nyc-logo-transparent.gif"
+                alt="Chicks of NYC Logo"
+                width={120}
+                height={120}
+                priority
+                className="rounded-lg"
+              />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-white font-heading">About the Wing Man</h1>
+              <p className="text-white/90 mt-2 text-lg">Discovering NYC's Hidden Wing Gems</p>
+            </div>
           </div>
         </section>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <section className="card p-8 slide-up overflow-hidden">
+          <section className="card p-8 slide-up will-change-transform" style={{ '--delay': '0s' } as React.CSSProperties}>
             <h2 className="text-2xl font-semibold mb-6 text-primary flex items-center gap-2">
-            <span className="animate-wing-flap inline-block">🍗</span>
+              <span className="animate-wing-flap inline-block will-change-transform">🍗</span>
               The Plan?
-              <span className="animate-wing-flap inline-block">🍗</span>
+              <span className="animate-wing-flap inline-block will-change-transform">🍗</span>
             </h2>
             
             <div className="relative mb-6 group">
@@ -33,6 +47,9 @@ export default function About() {
                 alt="The master plan"
                 width={600}
                 height={400}
+                priority
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSAyUC0zLyswLS4wOEQ+Q0dHPjgwRUpMS0ZJTD5NTlBOSE5MTkpMTEz/2wBDAR4eHh4eHx4eHx4eTEweTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEz/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                 className="rounded-lg shadow-lg transition-transform duration-300 group-hover:scale-[1.02]"
               />
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -79,10 +96,10 @@ export default function About() {
             </div>
           </section>
 
-          <section className="card p-8 slide-up" style={{ animationDelay: '0.2s' }}>
+          <section className="card p-8 slide-up will-change-transform" style={{ '--delay': '0.2s' } as React.CSSProperties}>
             <h2 className="text-2xl font-semibold mb-8 text-primary flex items-center gap-2">
               Rating System
-              <span className="animate-bounce inline-block">📊</span>
+              <span className="animate-bounce inline-block will-change-transform">📊</span>
             </h2>
             <div className="space-y-8">
               <div className="p-6 rounded-xl hover:bg-primary/5 transition-colors duration-300 border border-primary/10">
