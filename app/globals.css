@@ -179,10 +179,15 @@ h2 {
 /* Animation classes */
 .fade-in {
   animation: fadeIn 0.5s ease-out forwards;
+  contain: layout style;
 }
 
 .slide-up {
+  opacity: 0;
   animation: slideUp 0.5s ease-out forwards;
+  animation-delay: var(--delay, 0s);
+  contain: layout style;
+  transform: translateZ(0);
 }
 
 @keyframes fadeIn {
@@ -193,12 +198,28 @@ h2 {
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(20px) translateZ(0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) translateZ(0);
   }
+}
+
+/* Wing flap animation optimization */
+@keyframes wing-flap {
+  0%, 100% { 
+    transform: rotate(-5deg) translateZ(0);
+  }
+  50% { 
+    transform: rotate(5deg) translateZ(0);
+  }
+}
+
+.animate-wing-flap {
+  animation: wing-flap 2s ease-in-out infinite;
+  contain: layout style;
+  transform: translateZ(0);
 }
 
 /* Header section styles */
@@ -372,4 +393,70 @@ h2 {
 .icon-meat {
   transform-origin: center;
   display: inline-block;
+}
+
+/* Ranking list hover effects */
+.ranking-row {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.ranking-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  opacity: 0;
+  z-index: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ranking-row:hover::before {
+  opacity: 0.05;
+}
+
+.ranking-row:hover {
+  transform: translateX(4px);
+  box-shadow: -4px 0 0 var(--primary);
+}
+
+.ranking-row > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mobile ranking item hover */
+.ranking-item-mobile {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.ranking-item-mobile::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  opacity: 0;
+  z-index: 0;
+  transition: opacity 0.3s ease;
+}
+
+.ranking-item-mobile:hover::before {
+  opacity: 0.05;
+}
+
+.ranking-item-mobile:hover {
+  transform: translateX(4px);
+  box-shadow: -4px 0 0 var(--primary);
+}
+
+.ranking-item-mobile > * {
+  position: relative;
+  z-index: 1;
 }

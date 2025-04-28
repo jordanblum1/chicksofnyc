@@ -413,6 +413,7 @@ export default function Home() {
             photoUrl={photos[0] || ''}
             photos={photos.slice(1, 4)}
             mapUrl={selectedSpot.mapUrl || ''}
+            onClose={() => setIsSharing(false)}
           />
         )}
       </Modal>

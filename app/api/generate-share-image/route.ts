@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createCanvas, loadImage, registerFont } from 'canvas';
+import { createCanvas, loadImage, registerFont, CanvasRenderingContext2D, Image } from 'canvas';
 import sharp from 'sharp';
 import { join } from 'path';
 import * as fs from 'fs';
@@ -7,24 +7,59 @@ import * as fs from 'fs';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-// Register fonts
-const fontPath = join(process.cwd(), 'public/fonts/Inter_18pt-Bold.ttf');
-const lilitaPath = join(process.cwd(), 'public/fonts/LilitaOne-Regular.ttf');
-
-// Register fonts with simpler names
-if (fs.existsSync(fontPath)) {
-  registerFont(fontPath, { 
-    family: 'Inter',
-    weight: 'bold',
-    style: 'normal'
-  });
-}
+// Register the LilitaOne font which we know exists
+const lilitaPath = join(process.cwd(), 'public', 'fonts', 'LilitaOne-Regular.ttf');
 if (fs.existsSync(lilitaPath)) {
   registerFont(lilitaPath, { 
     family: 'LilitaOne',
-    weight: 'normal',
-    style: 'normal'
+    weight: 'normal'
   });
+}
+
+interface ImageDimensions {
+  width: number;
+  height: number;
+  photoSize: number;
+  photoGap: number;
+  photosStartY: number;
+  logoHeight: number;
+}
+
+const DIMENSIONS = {
+  story: {
+    width: 1080,
+    height: 1920,
+    photoSize: 400,
+    photoGap: 20,
+    photosStartY: 900,
+    logoHeight: 160
+  },
+  square: {
+    width: 1080,
+    height: 1080,
+    photoSize: 320,
+    photoGap: 16,
+    photosStartY: 580,
+    logoHeight: 120
+  }
+} as const;
+
+// Helper function to draw an image with error handling
+async function drawImage(
+  ctx: CanvasRenderingContext2D,
+  imagePath: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+) {
+  try {
+    const image = await loadImage(imagePath);
+    ctx.drawImage(image, x, y, width, height);
+  } catch (err) {
+    console.error('Error loading image:', err);
+    throw new Error(`Failed to load image: ${imagePath}`);
+  }
 }
 
 export async function POST(request: Request) {
@@ -37,197 +72,234 @@ export async function POST(request: Request) {
       sauceRating, 
       crispynessRating, 
       meatRating, 
+      photoUrl, 
+      photos = [],
       instagram,
-      photoUrl,
-      photos = []
+      format = 'story' 
     } = data;
 
-    if (!spotName || !photoUrl) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    // Create canvas with Instagram story dimensions (1080x1920)
     const canvas = createCanvas(1080, 1920);
     const ctx = canvas.getContext('2d');
+    const logoPath = join(process.cwd(), 'public', 'chicks-of-nyc-logo.png');
 
-    // Set background color (muted orange)
-    ctx.fillStyle = '#FFF5EB';  // Warm, muted orange background
-    ctx.fillRect(0, 0, 1080, 1920);
+    if (format === 'story') {
+      // Story format
+      ctx.fillStyle = '#FFF5EB';
+      ctx.fillRect(0, 0, 1080, 1920);
 
-    // Load and draw the logo at the top - centered
-    const logo = await loadImage(join(process.cwd(), 'public/chicks-of-nyc-logo.png'));
-    const logoHeight = 160;
-    const logoWidth = logoHeight * (logo.width / logo.height);
-    const logoX = (1080 - logoWidth) / 2;
-    ctx.drawImage(logo, logoX, 40, logoWidth, logoHeight);
+      // Load and draw the logo at the top - centered
+      const logo = await loadImage(logoPath);
+      const logoHeight = 160;
+      const logoWidth = logoHeight * (logo.width / logo.height);
+      const logoX = (1080 - logoWidth) / 2;
+      ctx.drawImage(logo, logoX, 40, logoWidth, logoHeight);
 
-    // Add Instagram handle and website in top right
-    ctx.textAlign = 'right';
-    ctx.font = 'bold 32px Inter';
-    ctx.fillStyle = '#FF4438';  // Secondary red
-    ctx.fillText('@chicksofnyc', 1040, 80);
-    
-    ctx.font = 'bold 24px Inter';
-    ctx.fillStyle = '#8B4513';  // Primary brown
-    ctx.fillText('chicksofnyc.com', 1040, 120);
-
-    // Restaurant name in primary color
-    ctx.font = 'bold 64px Inter';
-    ctx.fillStyle = '#8B4513';  // --primary
-    ctx.textAlign = 'left';
-    ctx.fillText(spotName, 40, 340);
-
-    // Address in text-dark
-    ctx.font = '32px Inter';
-    ctx.fillStyle = '#5D4037';  // --text-dark
-    ctx.fillText(address, 40, 400);
-
-    // Overall rating with large display
-    ctx.save();
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
-    ctx.shadowBlur = 20;
-    ctx.fillStyle = '#FFFCF5';  // --bg-warm
-    const overallText = `${overallRating.toFixed(1)}/10`;
-    ctx.font = 'bold 160px Inter';
-    const overallMetrics = ctx.measureText(overallText);
-    const overallWidth = Math.max(overallMetrics.width + 120, 520);  // Increased padding
-    roundRect(ctx, 40, 450, overallWidth, 220, 24);
-    ctx.fill();
-    
-    // Add outline
-    ctx.strokeStyle = '#FF4438';  // --secondary
-    ctx.lineWidth = 4;
-    ctx.stroke();
-    ctx.restore();
-
-    // Draw overall rating text
-    ctx.font = 'bold 160px Inter';
-    ctx.fillStyle = '#8B4513';  // --primary
-    ctx.textAlign = 'left';
-    ctx.fillText(overallText, 80, 600);
-    
-    ctx.font = '40px Inter';
-    ctx.fillStyle = '#5D4037';  // --text-dark
-    ctx.fillText('Overall Rating', 80, 650);
-
-    // Individual ratings with icons and colored backgrounds
-    const ratings = [
-      { label: 'Sauce', value: sauceRating, icon: '💧', color: '#FF4438', bgColor: '#FFFCF5' },  // All ratings use secondary red
-      { label: 'Crispy', value: crispynessRating, icon: '🔥', color: '#FF4438', bgColor: '#FFFCF5' },
-      { label: 'Meat', value: meatRating, icon: '🍗', color: '#FF4438', bgColor: '#FFFCF5' }
-    ];
-
-    const ratingWidth = 310;
-    const ratingGap = 25;
-    const ratingsY = 750;
-
-    ratings.forEach((rating, index) => {
-      const x = 40 + (index * (ratingWidth + ratingGap));
-      
-      // Draw rating box with subtle shadow and background
-      ctx.save();
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = '#FFFFFF';  // White background for contrast
-      roundRect(ctx, x, ratingsY, ratingWidth, 100, 16);
-      ctx.fill();
-
-      // Add color accent bar
-      ctx.fillStyle = rating.color;
-      ctx.fillRect(x, ratingsY, ratingWidth, 4);
-      ctx.restore();
-
-      // Draw icon
-      ctx.font = '40px Inter';
-      ctx.fillText(rating.icon, x + 20, ratingsY + 60);
-
-      // Draw label in dark brown and bold
-      ctx.font = 'bold 32px Inter';  // Made bold
-      ctx.fillStyle = '#8B4513';  // Primary brown
-      ctx.fillText(rating.label, x + 80, ratingsY + 60);
-
-      // Draw score with red color
-      ctx.font = 'bold 40px Inter';
-      ctx.fillStyle = rating.color;
+      // Add Instagram handle and website in top right
       ctx.textAlign = 'right';
-      ctx.fillText(`${rating.value}/10`, x + ratingWidth - 20, ratingsY + 60);
+      ctx.font = '32px LilitaOne';
+      ctx.fillStyle = '#FF4438';
+      ctx.fillText('@chicksofnyc', 1040, 80);
+      
+      ctx.font = '24px LilitaOne';
+      ctx.fillStyle = '#8B4513';
+      ctx.fillText('chicksofnyc.com', 1040, 120);
+
+      // Restaurant name in primary color
+      ctx.font = '64px LilitaOne';
+      ctx.fillStyle = '#8B4513';
       ctx.textAlign = 'left';
-    });
+      ctx.fillText(spotName, 40, 340);
 
-    // Draw photos in a 2x2 grid
-    const gridPhotoSize = 400;  // Reduced from 480
-    const photoGap = 20;  // Reduced from 40
-    const photosStartY = 900;  // Moved up from 1550
-    
-    // Helper function to draw a photo in the grid
-    const drawGridPhoto = async (photo: string, x: number, y: number) => {
-      const img = await loadImage(photo);
+      // Address in text-dark
+      ctx.font = '32px LilitaOne';
+      ctx.fillStyle = '#5D4037';
+      ctx.fillText(address, 40, 400);
+
+      // Overall rating with large display
       ctx.save();
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
-      ctx.shadowBlur = 15;
-      roundRect(ctx, x, y, gridPhotoSize, gridPhotoSize, 16);
-      ctx.clip();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = '#FFFCF5';
+      const overallText = `${overallRating.toFixed(1)}/10`;
+      ctx.font = '160px LilitaOne';
+      const overallMetrics = ctx.measureText(overallText);
+      const overallWidth = Math.max(overallMetrics.width + 120, 520);
+      roundRect(ctx, 40, 450, overallWidth, 220, 24);
+      ctx.fill();
       
-      // Calculate dimensions to fill square while maintaining aspect ratio
-      const imgAspect = img.width / img.height;
-      let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
-      
-      if (imgAspect > 1) {
-        // Landscape: fit to height
-        drawHeight = gridPhotoSize;
-        drawWidth = gridPhotoSize * imgAspect;
-        offsetX = -(drawWidth - gridPhotoSize) / 2;
-      } else {
-        // Portrait: fit to width
-        drawWidth = gridPhotoSize;
-        drawHeight = gridPhotoSize / imgAspect;
-        offsetY = -(drawHeight - gridPhotoSize) / 2;
-      }
-      
-      ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
+      ctx.strokeStyle = '#FF4438';
+      ctx.lineWidth = 4;
+      ctx.stroke();
       ctx.restore();
-    };
 
-    // Calculate grid positions with proper centering
-    const totalWidth = (gridPhotoSize * 2) + photoGap;
-    const startX = (1080 - totalWidth) / 2;
-    
-    // Draw main photo in top left
-    await drawGridPhoto(photoUrl, startX, photosStartY);
-    
-    // Draw up to 3 more photos from the photos array
-    const positions = [
-      [startX + gridPhotoSize + photoGap, photosStartY],  // Top right
-      [startX, photosStartY + gridPhotoSize + photoGap],  // Bottom left
-      [startX + gridPhotoSize + photoGap, photosStartY + gridPhotoSize + photoGap]  // Bottom right
-    ];
-    
-    for (let i = 0; i < Math.min(3, photos.length); i++) {
-      await drawGridPhoto(photos[i], positions[i][0], positions[i][1]);
+      ctx.font = '160px LilitaOne';
+      ctx.fillStyle = '#8B4513';
+      ctx.textAlign = 'left';
+      ctx.fillText(overallText, 80, 600);
+      
+      ctx.font = '40px LilitaOne';
+      ctx.fillStyle = '#5D4037';
+      ctx.fillText('Overall Rating', 80, 650);
+
+      // Individual ratings with icons
+      const ratings = [
+        { label: 'Sauce', value: sauceRating, icon: '💧', color: '#FF4438', bgColor: '#FFFCF5' },
+        { label: 'Crispy', value: crispynessRating, icon: '🔥', color: '#FF4438', bgColor: '#FFFCF5' },
+        { label: 'Meat', value: meatRating, icon: '🍗', color: '#FF4438', bgColor: '#FFFCF5' }
+      ];
+
+      const ratingWidth = 310;
+      const ratingGap = 25;
+      const ratingsY = 750;
+
+      ratings.forEach((rating, index) => {
+        const x = 40 + (index * (ratingWidth + ratingGap));
+        
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = '#FFFFFF';
+        roundRect(ctx, x, ratingsY, ratingWidth, 100, 16);
+        ctx.fill();
+
+        ctx.fillStyle = rating.color;
+        ctx.fillRect(x, ratingsY, ratingWidth, 4);
+        ctx.restore();
+
+        ctx.font = '32px LilitaOne';
+        ctx.fillStyle = '#8B4513';
+        ctx.fillText(rating.icon, x + 20, ratingsY + 60);
+
+        ctx.font = '32px LilitaOne';
+        ctx.fillStyle = '#8B4513';
+        ctx.fillText(rating.label, x + 60, ratingsY + 60);
+
+        ctx.font = '40px LilitaOne';
+        ctx.fillStyle = rating.color;
+        ctx.textAlign = 'right';
+        ctx.fillText(`${rating.value}/10`, x + ratingWidth - 20, ratingsY + 60);
+        ctx.textAlign = 'left';
+      });
+
+      // Draw photos in a grid
+      const gridPhotoSize = 400;
+      const photoGap = 20;
+      const photosStartY = 900;
+      
+      const totalWidth = (gridPhotoSize * 2) + photoGap;
+      const startX = (1080 - totalWidth) / 2;
+      
+      await drawGridPhoto(photoUrl, startX, photosStartY, gridPhotoSize, ctx);
+      
+      const positions = [
+        [startX + gridPhotoSize + photoGap, photosStartY],
+        [startX, photosStartY + gridPhotoSize + photoGap],
+        [startX + gridPhotoSize + photoGap, photosStartY + gridPhotoSize + photoGap]
+      ];
+      
+      for (let i = 0; i < Math.min(3, photos.length); i++) {
+        await drawGridPhoto(photos[i], positions[i][0], positions[i][1], gridPhotoSize, ctx);
+      }
+    } else {
+      // Square format (1080x1080)
+      canvas.width = 1080;
+      canvas.height = 1080;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw main photo at the top
+      const mainPhotoHeight = 600;
+      await drawImage(ctx, photoUrl, 0, 0, canvas.width, mainPhotoHeight);
+
+      // Add gradient overlay at the bottom of the photo
+      const gradient = ctx.createLinearGradient(0, mainPhotoHeight - 100, 0, mainPhotoHeight);
+      gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, mainPhotoHeight - 100, canvas.width, 100);
+
+      // Restaurant name and instagram (on top of the photo)
+      ctx.font = 'bold 64px LilitaOne';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
+      ctx.fillText(spotName, canvas.width / 2, mainPhotoHeight - 80);
+      
+      if (instagram) {
+        ctx.font = '32px LilitaOne';
+        ctx.fillText(`@${instagram}`, canvas.width / 2, mainPhotoHeight - 30);
+      }
+
+      // Address
+      ctx.font = '24px LilitaOne';
+      ctx.fillStyle = '#666666';
+      ctx.fillText(address, canvas.width / 2, mainPhotoHeight + 30);
+
+      // Overall rating
+      ctx.font = 'bold 120px LilitaOne';
+      ctx.fillStyle = '#FF5722';
+      ctx.textAlign = 'center';
+      ctx.fillText(overallRating.toString(), canvas.width / 2, mainPhotoHeight + 180);
+
+      // "OVERALL RATING" text
+      ctx.font = '32px LilitaOne';
+      ctx.fillStyle = '#666666';
+      ctx.fillText('OVERALL RATING', canvas.width / 2, mainPhotoHeight + 240);
+
+      // Individual ratings
+      const ratingY = mainPhotoHeight + 340;
+      const ratingSpacing = 200;
+      
+      // Sauce rating
+      ctx.font = 'bold 48px LilitaOne';
+      ctx.fillStyle = '#FF5722';
+      ctx.fillText(sauceRating.toString(), canvas.width / 2 - ratingSpacing, ratingY);
+      ctx.font = '24px LilitaOne';
+      ctx.fillStyle = '#666666';
+      ctx.fillText('SAUCE 💧', canvas.width / 2 - ratingSpacing, ratingY + 40);
+
+      // Crispyness rating
+      ctx.font = 'bold 48px LilitaOne';
+      ctx.fillStyle = '#FF5722';
+      ctx.fillText(crispynessRating.toString(), canvas.width / 2, ratingY);
+      ctx.font = '24px LilitaOne';
+      ctx.fillStyle = '#666666';
+      ctx.fillText('CRISPY 🔥', canvas.width / 2, ratingY + 40);
+
+      // Meat rating
+      ctx.font = 'bold 48px LilitaOne';
+      ctx.fillStyle = '#FF5722';
+      ctx.fillText(meatRating.toString(), canvas.width / 2 + ratingSpacing, ratingY);
+      ctx.font = '24px LilitaOne';
+      ctx.fillStyle = '#666666';
+      ctx.fillText('MEAT 🍗', canvas.width / 2 + ratingSpacing, ratingY + 40);
+
+      // Logo as a badge in top right corner
+      const logoSize = 120;
+      const padding = 20;
+      const logo = await loadImage(logoPath);
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+      ctx.shadowBlur = 15;
+      ctx.drawImage(logo, canvas.width - logoSize - padding, padding, logoSize, logoSize * (logo.height / logo.width));
+      ctx.restore();
+
+      // Add @chicksofnyc handle at the bottom
+      ctx.font = '32px LilitaOne';
+      ctx.fillStyle = '#FF5722';
+      ctx.fillText('@chicksofnyc', canvas.width / 2, canvas.height - 40);
     }
 
-    // Convert canvas to buffer
     const buffer = canvas.toBuffer('image/png');
-
-    // Optimize with sharp
-    const optimized = await sharp(buffer)
-      .png({ quality: 90 })
-      .toBuffer();
-
-    return new NextResponse(optimized, {
+    return new Response(buffer, {
       headers: {
         'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Content-Length': buffer.length.toString(),
       },
     });
-
-  } catch (error) {
-    console.error('Share image generation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate share image' },
+  } catch (error: unknown) {
+    console.error('Error generating share image:', error);
+    return new Response(
+      error instanceof Error ? error.message : 'Failed to generate share image',
       { status: 500 }
     );
   }
@@ -248,34 +320,60 @@ function roundRect(ctx: any, x: number, y: number, width: number, height: number
   ctx.closePath();
 }
 
-// Helper function to wrap text
-function getLines(ctx: any, text: string, maxWidth: number): string[] {
-  const words = text.split(' ');
-  const lines = [];
-  let currentLine = words[0];
-
-  for (let i = 1; i < words.length; i++) {
-    const word = words[i];
-    const width = ctx.measureText(currentLine + " " + word).width;
-    if (width < maxWidth) {
-      currentLine += " " + word;
+// Helper function to draw a photo in the grid
+async function drawGridPhoto(
+  photo: string,
+  x: number,
+  y: number,
+  size: number,
+  ctx: CanvasRenderingContext2D
+) {
+  console.log(`Drawing grid photo at x=${x}, y=${y}, size=${size}`);
+  
+  try {
+    const img = await loadImage(photo);
+    console.log('Image loaded successfully:', {
+      originalWidth: img.width,
+      originalHeight: img.height,
+      aspectRatio: img.width / img.height
+    });
+    
+    ctx.save();
+    console.log('Adding shadow and clipping');
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+    ctx.shadowBlur = 15;
+    roundRect(ctx, x, y, size, size, 16);
+    ctx.clip();
+    
+    const imgAspect = img.width / img.height;
+    let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+    
+    if (imgAspect > 1) {
+      // Landscape
+      drawHeight = size;
+      drawWidth = size * imgAspect;
+      offsetX = -(drawWidth - size) / 2;
+      console.log('Landscape image:', { drawWidth, drawHeight, offsetX });
     } else {
-      lines.push(currentLine);
-      currentLine = word;
+      // Portrait
+      drawWidth = size;
+      drawHeight = size / imgAspect;
+      offsetY = -(drawHeight - size) / 2;
+      console.log('Portrait image:', { drawWidth, drawHeight, offsetY });
     }
+    
+    console.log('Drawing image with parameters:', {
+      x: x + offsetX,
+      y: y + offsetY,
+      width: drawWidth,
+      height: drawHeight
+    });
+    
+    ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
+    ctx.restore();
+    console.log('Grid photo drawn successfully');
+  } catch (error) {
+    console.error('Error in drawGridPhoto:', error);
+    throw error;
   }
-  lines.push(currentLine);
-  return lines;
-}
-
-// Helper function to shade colors
-function shadeColor(color: string, percent: number): string {
-  const num = parseInt(color.replace('#', ''), 16);
-  const amt = Math.round(2.55 * percent);
-  const R = (num >> 16) + amt;
-  const G = (num >> 8 & 0x00FF) + amt;
-  const B = (num & 0x0000FF) + amt;
-  return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-    (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
 } 
