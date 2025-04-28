@@ -4,6 +4,11 @@ import { kv } from '@vercel/kv';
 const CACHE_PREFIX = 'map_';
 const CACHE_DURATION = 10 * 24 * 60 * 60; // 10 days in seconds
 
+// Helper to check if KV is available
+function isKvAvailable() {
+  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+}
+
 export async function GET(request: NextRequest) {
   const startTime = performance.now();
   const searchParams = request.nextUrl.searchParams;
@@ -16,6 +21,18 @@ export async function GET(request: NextRequest) {
       { error: 'Name and address are required' },
       { status: 400 }
     );
+  }
+
+  // If KV is not available, generate the map URL directly without caching
+  if (!isKvAvailable()) {
+    console.log(`[MAP] ⚠ KV not available, generating map URL directly for: "${name}"`);
+    const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(name + ' ' + address)}`;
+    const duration = Math.round(performance.now() - startTime);
+    return NextResponse.json({
+      url: mapUrl,
+      fromCache: false,
+      duration,
+    });
   }
 
   const cacheKey = `${CACHE_PREFIX}${name}|${address}`.toLowerCase();

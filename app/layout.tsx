@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { Outfit, Quicksand } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const quicksand = Quicksand({ 
@@ -56,6 +57,11 @@ export default function RootLayout({
         {children}
         <Analytics />
         <SpeedInsights />
+        <Script
+          id="google-maps-script"
+          strategy="beforeInteractive"
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,geocoding`}
+        />
       </body>
     </html>
   );
