@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { kv } from '@vercel/kv';
+import logger from '../../utils/logger';
 
 const GEO_CACHE_PREFIX = 'geo_';
 const MAP_CACHE_PREFIX = 'map_';
@@ -22,7 +23,7 @@ export async function GET() {
       `https://${process.env.VERCEL_URL}` : 
       process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
-    console.log('[CACHE INIT] Using base URL:', baseUrl);
+    logger.info('CACHE_INIT', 'Using base URL:', baseUrl);
 
     // Fetch all wing spots to prime the cache
     const wingsResponse = await fetch(`${baseUrl}/api/get-all-wings`, {
@@ -36,7 +37,7 @@ export async function GET() {
     }
 
     const wingsData = await wingsResponse.json();
-    console.log(`[CACHE INIT] Found ${wingsData.data.length} spots to process`);
+    logger.info('CACHE_INIT', `Found ${wingsData.data.length} spots to process`);
 
     // Prime the cache for each spot's photos and map
     const spots = wingsData.data;
@@ -45,7 +46,7 @@ export async function GET() {
 
     for (const spot of spots) {
       try {
-        console.log(`[CACHE INIT] Processing spot: ${spot.name}`);
+        logger.info('CACHE_INIT', `Processing spot: ${spot.name}`);
         
         // Prime map cache
         const mapCacheKey = `${MAP_CACHE_PREFIX}${spot.name}|${spot.address}`.toLowerCase();
@@ -59,7 +60,7 @@ export async function GET() {
           }, {
             ex: MAP_CACHE_DURATION
           });
-          console.log(`[CACHE INIT] Cached map URL for: ${spot.name}`);
+          logger.info('CACHE_INIT', `Cached map URL for: ${spot.name}`);
         }
 
         // Prime photos cache
@@ -104,7 +105,7 @@ export async function GET() {
                   }, {
                     ex: PHOTOS_CACHE_DURATION
                   });
-                  console.log(`[CACHE INIT] Cached ${photoUrls.length} photos for: ${spot.name}`);
+                  logger.info('CACHE_INIT', `Cached ${photoUrls.length} photos for: ${spot.name}`);
                 }
               }
             }
@@ -116,7 +117,7 @@ export async function GET() {
         // Add a small delay between spots to avoid rate limits
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (spotError) {
-        console.error(`[CACHE INIT] Error processing spot ${spot.name}:`, spotError);
+        logger.error('CACHE_INIT', `Error processing spot ${spot.name}:`, spotError);
         results.push({ name: spot.name, status: 'error', error: spotError instanceof Error ? spotError.message : 'Unknown error' });
         continue;
       }
@@ -130,7 +131,7 @@ export async function GET() {
       baseUrl
     });
   } catch (error) {
-    console.error('[CACHE INIT] Error:', error);
+    logger.error('CACHE_INIT', 'Error:', error);
     return NextResponse.json({ 
       error: 'Failed to initialize cache', 
       details: error instanceof Error ? error.message : 'Unknown error'

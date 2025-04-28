@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Airtable from 'airtable';
+import logger from '../../utils/logger';
 
 Airtable.configure({
   apiKey: process.env.AIRTABLE_PAT,
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       votes: updatedRecord.fields['Votes']
     });
   } catch (error) {
-    console.error('Error updating votes:', error);
+    logger.error('APP', 'Error updating votes:', error);
     return NextResponse.json(
       { error: 'Failed to update votes' },
       { status: 500 }

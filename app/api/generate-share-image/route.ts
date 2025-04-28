@@ -3,6 +3,7 @@ import { createCanvas, loadImage, registerFont, CanvasRenderingContext2D, Image 
 import sharp from 'sharp';
 import { join } from 'path';
 import * as fs from 'fs';
+import logger from '../../utils/logger';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -57,7 +58,7 @@ async function drawImage(
     const image = await loadImage(imagePath);
     ctx.drawImage(image, x, y, width, height);
   } catch (err) {
-    console.error('Error loading image:', err);
+    logger.error('APP', 'Error loading image:', err);
     throw new Error(`Failed to load image: ${imagePath}`);
   }
 }
@@ -297,7 +298,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error: unknown) {
-    console.error('Error generating share image:', error);
+    logger.error('APP', 'Error generating share image:', error);
     return new Response(
       error instanceof Error ? error.message : 'Failed to generate share image',
       { status: 500 }
@@ -328,18 +329,18 @@ async function drawGridPhoto(
   size: number,
   ctx: CanvasRenderingContext2D
 ) {
-  console.log(`Drawing grid photo at x=${x}, y=${y}, size=${size}`);
+  logger.info('APP', `Drawing grid photo at x=${x}, y=${y}, size=${size}`);
   
   try {
     const img = await loadImage(photo);
-    console.log('Image loaded successfully:', {
+    logger.info('APP', 'Image loaded successfully:', {
       originalWidth: img.width,
       originalHeight: img.height,
       aspectRatio: img.width / img.height
     });
     
     ctx.save();
-    console.log('Adding shadow and clipping');
+    logger.info('APP', 'Adding shadow and clipping');
     ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
     ctx.shadowBlur = 15;
     roundRect(ctx, x, y, size, size, 16);
@@ -353,16 +354,16 @@ async function drawGridPhoto(
       drawHeight = size;
       drawWidth = size * imgAspect;
       offsetX = -(drawWidth - size) / 2;
-      console.log('Landscape image:', { drawWidth, drawHeight, offsetX });
+      logger.info('APP', 'Landscape image:', { drawWidth, drawHeight, offsetX });
     } else {
       // Portrait
       drawWidth = size;
       drawHeight = size / imgAspect;
       offsetY = -(drawHeight - size) / 2;
-      console.log('Portrait image:', { drawWidth, drawHeight, offsetY });
+      logger.info('APP', 'Portrait image:', { drawWidth, drawHeight, offsetY });
     }
     
-    console.log('Drawing image with parameters:', {
+    logger.info('APP', 'Drawing image with parameters:', {
       x: x + offsetX,
       y: y + offsetY,
       width: drawWidth,
@@ -371,9 +372,9 @@ async function drawGridPhoto(
     
     ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight);
     ctx.restore();
-    console.log('Grid photo drawn successfully');
+    logger.info('APP', 'Grid photo drawn successfully');
   } catch (error) {
-    console.error('Error in drawGridPhoto:', error);
+    logger.error('APP', 'Error in drawGridPhoto:', error);
     throw error;
   }
 } 

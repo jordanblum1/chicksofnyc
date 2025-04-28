@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
+import logger from '../utils/logger';
 
 // Extend the window interface to include the Google Maps library
 declare global {
@@ -66,11 +67,11 @@ export default function Submit() {
                 // If the place name is empty, use the name from the place details
                 placeName: prev.placeName || place.displayName || place.name || ''
               }));
-              console.log('Place selected:', place);
+              logger.info('APP', 'Place selected:', place);
             }
           });
         } catch (error) {
-          console.error('Error initializing PlaceAutocompleteElement:', error);
+          logger.error('APP', 'Error initializing PlaceAutocompleteElement:', error);
           toast.error(
             'Unable to initialize location search. Please try again or contact support.',
             {
@@ -168,7 +169,7 @@ export default function Submit() {
         }
       }
     } catch (error) {
-      console.error('Submit error:', error);
+      logger.error('APP', 'Submit error:', error);
       toast.error(
         'Something went wrong. Please try again.', 
         {

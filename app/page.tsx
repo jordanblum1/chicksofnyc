@@ -19,6 +19,7 @@ import type { Settings } from 'react-slick';
 import Slider from 'react-slick';
 import WingMap from './components/WingMap';
 import SpotDetails from './components/SpotDetails';
+import logger from './utils/logger';
 
 // Configure page options
 export const runtime = 'edge';
@@ -90,17 +91,17 @@ export default function Home() {
       
       setLoadingPhotos(true);
       try {
-        console.log('Fetching photos for:', selectedSpot);
+        logger.info('APP', 'Fetching photos for:', selectedSpot);
         const response = await fetch(
           `/api/get-place-photos?name=${encodeURIComponent(selectedSpot.name)}&address=${encodeURIComponent(selectedSpot.address)}`
         );
         const data = await response.json();
-        console.log('Photo response:', data);
+        logger.info('APP', 'Photo response:', data);
         if (data.photos) {
           setPhotos(data.photos);
         }
       } catch (error) {
-        console.error('Error fetching photos:', error);
+        logger.error('APP', 'Error fetching photos:', error);
       } finally {
         setLoadingPhotos(false);
       }

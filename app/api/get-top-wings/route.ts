@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Airtable from 'airtable';
+import logger from '../../utils/logger';
 
 Airtable.configure({
   apiKey: process.env.AIRTABLE_PAT,
@@ -38,7 +39,7 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('Airtable fetch error:', error);
+    logger.error('APP', 'Airtable fetch error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch rankings' },
       { status: 500 }

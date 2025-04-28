@@ -5,6 +5,7 @@ import { faDroplet, faFire, faDrumstickBite } from '@fortawesome/free-solid-svg-
 import Lottie from 'lottie-react';
 import wingAnimation from '../animations/wings.json';
 import { formatNumber } from '../utils/formatNumber';
+import logger from '../utils/logger';
 
 interface WingSpot {
   id: string;
@@ -46,10 +47,10 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
         const cacheData = await cacheResponse.json();
         
         if (cacheData.fromCache) {
-          console.log(`[SPOT] ✓ Using cached coordinates for "${spot.name}"`);
+          logger.info('SPOT', `✓ Using cached coordinates for "${spot.name}"`);
           setCoordinates(cacheData.coordinates);
         } else {
-          console.log(`[SPOT] Cache miss for "${spot.name}" - geocoding address`);
+          logger.info('SPOT', `Cache miss for "${spot.name}" - geocoding address`);
           // If not in cache, use Google Maps Geocoder
           const geocoder = new google.maps.Geocoder();
           const results = await new Promise((resolve, reject) => {
@@ -76,11 +77,11 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
             }),
           });
           
-          console.log(`[SPOT] → Cached new coordinates for "${spot.name}"`);
+          logger.info('SPOT', `→ Cached new coordinates for "${spot.name}"`);
           setCoordinates(position);
         }
       } catch (error) {
-        console.error(`[SPOT] ✗ Error fetching coordinates for "${spot.name}":`, error);
+        logger.error('SPOT', `✗ Error fetching coordinates for "${spot.name}":`, error);
       } finally {
         setLoading(false);
       }
@@ -98,9 +99,9 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
         );
         const data = await response.json();
         setMapUrl(data.url);
-        console.log(`[SPOT] ${data.fromCache ? '✓ Using cached' : '→ Generated new'} map URL for "${spot.name}"`);
+        logger.info('SPOT', `${data.fromCache ? '✓ Using cached' : '→ Generated new'} map URL for "${spot.name}"`);
       } catch (error) {
-        console.error(`[SPOT] ✗ Failed to fetch map URL for "${spot.name}":`, error);
+        logger.error('SPOT', `✗ Failed to fetch map URL for "${spot.name}":`, error);
       } finally {
         setIsMapLoading(false);
       }
@@ -115,14 +116,14 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
       
       setLoadingPhotos(true);
       try {
-        console.log(`[SPOT DETAILS] Fetching photos for: ${spot.name}`);
+        logger.info('SPOT_DETAILS', `Fetching photos for: ${spot.name}`);
         const response = await fetch(
           `/api/get-place-photos?name=${encodeURIComponent(spot.name)}&address=${encodeURIComponent(spot.address)}`
         );
         const data = await response.json();
         
         if (data.error) {
-          console.error(`[PHOTOS ERROR] ${spot.name}: ${data.error}`);
+          logger.error('PHOTOS', `${spot.name}: ${data.error}`);
         } else {
           const status = data.fromCache ? 
             (data.isStale ? 'STALE CACHE' : 'CACHE HIT') : 
@@ -130,11 +131,11 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
           const age = data.cacheAge ? 
             ` (${Math.round(data.cacheAge / (1000 * 60 * 60))} hours old)` : 
             '';
-          console.log(`[PHOTOS ${status}] ${spot.name}${age}`);
-          console.log(`[PHOTOS COUNT] ${data.photos.length} photos loaded in ${data.duration}ms`);
+          logger.info('PHOTOS', `${status} ${spot.name}${age}`);
+          logger.info('PHOTOS', `${data.photos.length} photos loaded in ${data.duration}ms`);
         }
       } catch (error) {
-        console.error('[PHOTOS ERROR] Failed to fetch photos:', error);
+        logger.error('PHOTOS', 'Failed to fetch photos:', error);
       } finally {
         setLoadingPhotos(false);
       }

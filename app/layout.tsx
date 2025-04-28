@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { Outfit, Quicksand } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import logger from "./utils/logger";
 
 const quicksand = Quicksand({ 
   subsets: ["latin"],
@@ -58,15 +59,15 @@ async function initCache() {
         `https://${process.env.VERCEL_URL}` : 
         process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
-      console.log('[CACHE INIT] Starting cache initialization...');
+      logger.info('CACHE_INIT', 'Starting cache initialization...');
       const response = await fetch(`${baseUrl}/api/init-cache`);
       if (!response.ok) {
         throw new Error(`Failed to initialize cache: ${response.status} ${response.statusText}`);
       }
       const data = await response.json();
-      console.log('[CACHE INIT] Result:', data);
+      logger.info('CACHE_INIT', 'Result:', data);
     } catch (error) {
-      console.error('[CACHE INIT] Failed:', error);
+      logger.error('CACHE_INIT', 'Failed:', error);
     }
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { kv } from '@vercel/kv';
+import logger from '../../utils/logger';
 
 const CACHE_PREFIX = 'map_';
 const CACHE_DURATION = 10 * 24 * 60 * 60; // 10 days in seconds
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   // If KV is not available, generate the map URL directly without caching
   if (!isKvAvailable()) {
-    console.log(`[MAP] ⚠ KV not available, generating map URL directly for: "${name}"`);
+    logger.info('MAP', ` ⚠ KV not available, generating map URL directly for: "${name}"`);
     const mapUrl = `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(name + ' ' + address)}`;
     const duration = Math.round(performance.now() - startTime);
     return NextResponse.json({

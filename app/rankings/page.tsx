@@ -18,6 +18,7 @@ import SpotDetails from '../components/SpotDetails';
 
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 import wingAnimation from '../animations/wings.json';
+import logger from '../utils/logger';
 
 interface WingSpot {
   id: string;
@@ -59,7 +60,7 @@ export default function RankingsPage() {
           setPhotos(data.photos);
         }
       } catch (error) {
-        console.error('Error fetching photos:', error);
+        logger.error('APP', 'Error fetching photos:', error);
       } finally {
         setLoadingPhotos(false);
       }
@@ -145,7 +146,7 @@ export default function RankingsPage() {
         setPhotos(data.photos);
       }
     } catch (error) {
-      console.error('Error fetching photos:', error);
+      logger.error('APP', 'Error fetching photos:', error);
     } finally {
       setLoadingPhotos(false);
     }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { kv } from '@vercel/kv';
+import logger from '../../utils/logger';
 
 const CACHE_PREFIX = 'geo_';
 const CACHE_DURATION = 30 * 24 * 60 * 60; // 30 days in seconds
@@ -21,9 +22,9 @@ function isKvAvailable() {
 function logAddressBatch(addresses: string[], status: 'hit' | 'miss', ages?: number[]) {
   if (status === 'hit' && ages) {
     const formattedAges = ages.map(age => formatDuration(age));
-    console.log(`[GEOCODE] ✓ Cache hit for ${addresses.length} address(es), ages: ${formattedAges.join(', ')}`);
+    logger.info('GEOCODE', `✓ Cache hit for ${addresses.length} address(es), ages: ${formattedAges.join(', ')}`);
   } else {
-    console.log(`[GEOCODE] ✗ Cache miss for ${addresses.length} address(es)`);
+    logger.info('GEOCODE', `✗ Cache miss for ${addresses.length} address(es)`);
   }
 }
 
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
 
     // If KV is not available, just return success without caching
     if (!isKvAvailable()) {
-      console.log(`[GEOCODE] ⚠ KV not available, skipping cache for: "${address}"`);
+      logger.warn('GEOCODE', `⚠ KV not available, skipping cache for: "${address}"`);
       return NextResponse.json({
         success: true,
         coordinates,
@@ -58,14 +59,14 @@ export async function POST(request: Request) {
       ex: CACHE_DURATION
     });
 
-    console.log(`[GEOCODE] → Cached coordinates for address: "${address}"`);
+    logger.info('GEOCODE', `→ Cached coordinates for address: "${address}"`);
 
     return NextResponse.json({
       success: true,
       coordinates,
     });
   } catch (error) {
-    console.error('[GEOCODE] ✗ Cache error:', error);
+    logger.error('GEOCODE', `✗ Cache error:`, error);
     return NextResponse.json(
       { error: 'Failed to cache coordinates' },
       { status: 500 }
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
 
     // If KV is not available, return cache miss to force direct geocoding
     if (!isKvAvailable()) {
-      console.log(`[GEOCODE] ⚠ KV not available, returning cache miss for: "${address}"`);
+      logger.warn('GEOCODE', `⚠ KV not available, returning cache miss for: "${address}"`);
       return NextResponse.json({ fromCache: false });
     }
 
@@ -107,7 +108,7 @@ export async function GET(request: NextRequest) {
     logAddressBatch([address], 'miss');
     return NextResponse.json({ fromCache: false });
   } catch (error) {
-    console.error('[GEOCODE] ✗ Cache error:', error);
+    logger.error('GEOCODE', `✗ Cache error:`, error);
     return NextResponse.json(
       { error: 'Failed to get cached coordinates' },
       { status: 500 }

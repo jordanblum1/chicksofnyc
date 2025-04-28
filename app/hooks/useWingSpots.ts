@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import logger from '../utils/logger';
 
 interface WingSpot {
   id: string;
@@ -28,7 +29,7 @@ export function useWingSpots<T extends WingSpot>(endpoint: string) {
         const response = await fetch(endpoint);
         const data = await response.json();
         
-        console.log(`[SPOTS] Processing ${data.data.length} wing spots`);
+        logger.info('SPOTS', `Processing ${data.data.length} wing spots`);
         
         // Process each spot to add coordinates
         const spotsWithCoords = await Promise.all(data.data.map(async (spot: T) => {
@@ -40,14 +41,14 @@ export function useWingSpots<T extends WingSpot>(endpoint: string) {
             const cacheData = await cacheResponse.json();
             
             if (cacheData.fromCache) {
-              console.log(`[GEOCODE] ✓ Cache hit for "${spot.name}" (${spot.address})`);
+              logger.info('GEOCODE', `✓ Cache hit for "${spot.name}" (${spot.address})`);
               return {
                 ...spot,
                 coordinates: cacheData.coordinates
               };
             }
             
-            console.log(`[GEOCODE] Cache miss for "${spot.name}" - using Google Maps API`);
+            logger.info('GEOCODE', `Cache miss for "${spot.name}" - using Google Maps API`);
             
             // If not in cache, use Google Maps Geocoder
             const geocoder = new google.maps.Geocoder();
@@ -75,21 +76,21 @@ export function useWingSpots<T extends WingSpot>(endpoint: string) {
               }),
             });
             
-            console.log(`[GEOCODE] → Cached new coordinates for "${spot.name}"`);
+            logger.info('GEOCODE', `→ Cached new coordinates for "${spot.name}"`);
             
             return {
               ...spot,
               coordinates: position
             };
           } catch (error) {
-            console.error(`[GEOCODE] ✗ Error processing "${spot.name}":`, error);
+            logger.error('GEOCODE', `✗ Error processing "${spot.name}":`, error);
             return spot;
           }
         }));
         
         setSpots(spotsWithCoords);
       } catch (error) {
-        console.error('[SPOTS] Error fetching spots:', error);
+        logger.error('SPOTS', 'Error fetching spots:', error);
       } finally {
         setLoading(false);
       }

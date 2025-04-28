@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Airtable from 'airtable';
+import logger from '../../utils/logger';
 
 // Configure Airtable with bearer token
 Airtable.configure({
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
     const { placeName, address, additionalComments, email } = await request.json();
 
     // Log the field names we're trying to use
-    console.log('Attempting to create record with fields:', {
+    logger.info('APP', 'Attempting to create record with fields:', {
       'Name': placeName,
       'Address': address,
       'Comments': additionalComments,
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Airtable submission error:', error);
+    logger.error('APP', 'Airtable submission error:', error);
     return NextResponse.json(
       { error: 'Failed to submit to Airtable' },
       { status: 500 }

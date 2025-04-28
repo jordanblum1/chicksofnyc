@@ -3,6 +3,7 @@ import { Wrapper } from "@googlemaps/react-wrapper";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDrumstickBite, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import { TopVotedSpots } from './TopVotedSpots';
+import logger from '../utils/logger';
 
 interface MapProps {
   onSpotSelect: (spot: ReviewedSpot) => void;
@@ -132,7 +133,7 @@ function MapComponent({ onSpotSelect, reviewedSpots, unreviewedSpots: unreviewed
         votesSpan.textContent = data.votes.toString();
       }
     } catch (error) {
-      console.error('Error voting:', error);
+      logger.error('APP', 'Error voting:', error);
     }
   }, []);
 
@@ -259,18 +260,18 @@ function MapComponent({ onSpotSelect, reviewedSpots, unreviewedSpots: unreviewed
 
     // Add click handler
     marker.addListener('click', () => {
-      console.log(`${isReviewed ? 'Reviewed' : 'Unreviewed'} marker clicked:`, spot.name);
-      console.log('Current active window ref:', activeInfoWindowRef.current);
+      logger.info('APP', `${isReviewed ? 'Reviewed' : 'Unreviewed'} marker clicked:`, spot.name);
+      logger.info('APP', 'Current active window ref:', activeInfoWindowRef.current);
       
       // Close any existing info window
       if (activeInfoWindowRef.current) {
-        console.log('Closing existing info window');
+        logger.info('APP', 'Closing existing info window');
         activeInfoWindowRef.current.close();
         activeInfoWindowRef.current = null;
       }
       
       // Open this info window
-      console.log('Opening new info window for:', spot.name);
+      logger.info('APP', 'Opening new info window for:', spot.name);
       infoWindow.open(map, marker);
       activeInfoWindowRef.current = infoWindow;
     });
@@ -288,9 +289,9 @@ function MapComponent({ onSpotSelect, reviewedSpots, unreviewedSpots: unreviewed
     if (!map || loading) return;
     if (!reviewedSpots?.length && !unreviewed?.length) return;
 
-    console.log('[MAP] Adding markers for wing spots...');
-    console.log('[MAP] Reviewed spots:', reviewedSpots.length);
-    console.log('[MAP] Unreviewed spots:', unreviewed.length);
+    logger.info('MAP', 'Adding markers for wing spots...');
+    logger.info('MAP', 'Reviewed spots:', reviewedSpots.length);
+    logger.info('MAP', 'Unreviewed spots:', unreviewed.length);
 
     // Clear existing markers
     markers.forEach((marker: google.maps.Marker) => marker.setMap(null));
@@ -316,10 +317,10 @@ function MapComponent({ onSpotSelect, reviewedSpots, unreviewedSpots: unreviewed
         .then(response => response.json())
         .then(data => {
           if (data.fromCache) {
-            console.log(`[MAP] ✓ Using cached coordinates for "${spot.name}"`);
+            logger.info('MAP', `✓ Using cached coordinates for "${spot.name}"`);
             addMarkerToMap(spot, data.coordinates, true);
           } else {
-            console.log(`[MAP] Cache miss for "${spot.name}" - geocoding address`);
+            logger.info('MAP', `Cache miss for "${spot.name}" - geocoding address`);
             // Geocode and cache the result
             geocoder.geocode({ address: spot.address }, (results, status) => {
               if (status === 'OK' && results?.[0]?.geometry?.location) {
@@ -336,8 +337,8 @@ function MapComponent({ onSpotSelect, reviewedSpots, unreviewedSpots: unreviewed
                     coordinates: position,
                   }),
                 })
-                .then(() => console.log(`[MAP] → Cached new coordinates for "${spot.name}"`))
-                .catch(error => console.error(`[MAP] ✗ Failed to cache coordinates for "${spot.name}":`, error));
+                .then(() => logger.info('MAP', `→ Cached new coordinates for "${spot.name}"`))
+                .catch(error => logger.error('MAP', `✗ Failed to cache coordinates for "${spot.name}":`, error));
 
                 addMarkerToMap(spot, position, true);
               }
@@ -345,11 +346,11 @@ function MapComponent({ onSpotSelect, reviewedSpots, unreviewedSpots: unreviewed
           }
         })
         .catch(error => {
-          console.error(`[MAP] ✗ Error checking geocode cache for "${spot.name}":`, error);
+          logger.error('MAP', `✗ Error checking geocode cache for "${spot.name}":`, error);
           // Fallback to direct geocoding
           geocoder.geocode({ address: spot.address }, (results, status) => {
             if (status === 'OK' && results?.[0]?.geometry?.location) {
-              console.log(`[MAP] ⚠ Fallback to direct geocoding for "${spot.name}"`);
+              logger.info('MAP', `⚠ Fallback to direct geocoding for "${spot.name}"`);
               const position = results[0].geometry.location.toJSON();
               addMarkerToMap(spot, position, true);
             }
@@ -369,10 +370,10 @@ function MapComponent({ onSpotSelect, reviewedSpots, unreviewedSpots: unreviewed
         .then(response => response.json())
         .then(data => {
           if (data.fromCache) {
-            console.log(`[MAP] ✓ Using cached coordinates for "${spot.name}" (unreviewed)`);
+            logger.info('MAP', `✓ Using cached coordinates for "${spot.name}" (unreviewed)`);
             addMarkerToMap(spot, data.coordinates, false);
           } else {
-            console.log(`[MAP] Cache miss for "${spot.name}" - geocoding address (unreviewed)`);
+            logger.info('MAP', `Cache miss for "${spot.name}" - geocoding address (unreviewed)`);
             // Geocode and cache the result
             geocoder.geocode({ address: spot.address }, (results, status) => {
               if (status === 'OK' && results?.[0]?.geometry?.location) {
@@ -389,8 +390,8 @@ function MapComponent({ onSpotSelect, reviewedSpots, unreviewedSpots: unreviewed
                     coordinates: position,
                   }),
                 })
-                .then(() => console.log(`[MAP] → Cached new coordinates for "${spot.name}" (unreviewed)`))
-                .catch(error => console.error(`[MAP] ✗ Failed to cache coordinates for "${spot.name}":`, error));
+                .then(() => logger.info('MAP', `→ Cached new coordinates for "${spot.name}" (unreviewed)`))
+                .catch(error => logger.error('MAP', `✗ Failed to cache coordinates for "${spot.name}":`, error));
 
                 addMarkerToMap(spot, position, false);
               }
@@ -398,11 +399,11 @@ function MapComponent({ onSpotSelect, reviewedSpots, unreviewedSpots: unreviewed
           }
         })
         .catch(error => {
-          console.error(`[MAP] ✗ Error checking geocode cache for "${spot.name}":`, error);
+          logger.error('MAP', `✗ Error checking geocode cache for "${spot.name}":`, error);
           // Fallback to direct geocoding
           geocoder.geocode({ address: spot.address }, (results, status) => {
             if (status === 'OK' && results?.[0]?.geometry?.location) {
-              console.log(`[MAP] ⚠ Fallback to direct geocoding for "${spot.name}" (unreviewed)`);
+              logger.info('MAP', `⚠ Fallback to direct geocoding for "${spot.name}" (unreviewed)`);
               const position = results[0].geometry.location.toJSON();
               addMarkerToMap(spot, position, false);
             }

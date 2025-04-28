@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Lottie from 'lottie-react';
 import wingAnimation from '../animations/wings.json';
+import logger from '../utils/logger';
 
 interface WingSpot {
   id: string;
@@ -84,7 +85,7 @@ export default function SharePreview({
         setSquareUrl(url);
       }
     } catch (error) {
-      console.error('Error generating share image:', error);
+      logger.error('APP', 'Error generating share image:', error);
       setError('Failed to generate image. Please try again.');
     } finally {
       setIsGenerating(false);
@@ -132,7 +133,7 @@ export default function SharePreview({
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
-      console.error('Failed to copy image:', err);
+      logger.error('APP', 'Failed to copy image:', err);
       alert('Failed to copy image. Try downloading instead.');
     }
   };
