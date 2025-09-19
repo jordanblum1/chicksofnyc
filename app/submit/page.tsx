@@ -29,75 +29,150 @@ export default function Submit() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
   const autocompleteRef = useRef<HTMLDivElement>(null);
+  const autocompleteInstanceRef = useRef<any>(null);
+  const listenerRef = useRef<any>(null);
+
+  // Function to initialize the autocomplete
+  const initializeAutocomplete = () => {
+    if (autocompleteRef.current && window.google && window.google.maps) {
+      try {
+        logger.info('APP', 'Initializing Google Places Autocomplete');
+
+        // Clean up previous instance
+        if (autocompleteInstanceRef.current) {
+          // @ts-ignore
+          google.maps.event.clearInstanceListeners(autocompleteInstanceRef.current);
+        }
+
+        // Get the existing input element or create one if it doesn't exist
+        let inputElement = document.getElementById('address-input') as HTMLInputElement;
+        if (!inputElement && autocompleteRef.current) {
+          logger.info('APP', 'Creating new input element');
+          inputElement = document.createElement('input');
+          inputElement.type = 'text';
+          inputElement.placeholder = 'Search for a restaurant or enter address...';
+          inputElement.className = 'w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors';
+          inputElement.id = 'address-input';
+          inputElement.name = 'address';
+
+          // Clear any previous content and add the input
+          autocompleteRef.current.innerHTML = '';
+          autocompleteRef.current.appendChild(inputElement);
+        }
+
+        // Create the Autocomplete instance attached to our input
+        // @ts-ignore
+        const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
+          // Remove types restriction to avoid the "establishment cannot be mixed" error
+          // Let users search for any type of place
+          componentRestrictions: { country: 'us' }
+        });
+
+        // Store the instance
+        autocompleteInstanceRef.current = autocomplete;
+
+
+        // Listen for the place_changed event
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+
+          if (place) {
+            // Try to get address from various properties
+            const selectedAddress = place.formatted_address ||
+              place.name ||
+              place.vicinity ||
+              inputElement.value || '';
+
+            const selectedName = place.name || '';
+
+            if (selectedAddress) {
+              // Update form data
+              setFormData(prev => ({
+                ...prev,
+                address: selectedAddress,
+                placeName: prev.placeName || selectedName
+              }));
+
+              // Also ensure the input shows the address
+              inputElement.value = selectedAddress;
+
+              // Log the selected address
+              logger.info('APP', 'Address selected:', selectedAddress);
+
+              toast.success(
+                'Address selected successfully!',
+                {
+                  duration: 3000,
+                  icon: <FontAwesomeIcon icon={faCheck} className="text-green-500" />,
+                }
+              );
+            }
+          } else if (inputElement.value) {
+            // If no place object but there's a value, use it directly
+            const manualValue = inputElement.value;
+
+            setFormData(prev => ({
+              ...prev,
+              address: manualValue
+            }));
+          }
+        });
+
+        // Listen for Enter key to allow manual address entry
+        inputElement.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const value = inputElement.value;
+            if (value) {
+              setFormData(prev => ({
+                ...prev,
+                address: value
+              }));
+            }
+          }
+        });
+      } catch (error) {
+        logger.error('APP', 'Error initializing Autocomplete:', error);
+        toast.error(
+          'Unable to initialize location search. Please try again or contact support.',
+          {
+            duration: 5000,
+            icon: <FontAwesomeIcon icon={faXmark} className="text-red-500" />,
+          }
+        );
+      }
+    }
+  };
 
   useEffect(() => {
     // Check if Google Maps API is loaded
     if (typeof window !== 'undefined' && window.google && window.google.maps) {
       setGoogleMapsLoaded(true);
-      
-      // Initialize Google Maps Places Autocomplete Element (new API)
-      if (autocompleteRef.current) {
-        try {
-          // Clear any previous content
-          autocompleteRef.current.innerHTML = '';
-          
-          // Create the Place Autocomplete Element
-          // @ts-ignore - TypeScript definitions might not be up to date with the newest API
-          const placeAutocompleteElement = new window.google.maps.places.PlaceAutocompleteElement({
-            types: ['establishment', 'address'],
-            componentRestrictions: { country: 'us' }
-          });
-          
-          // Style the element to match our form
-          placeAutocompleteElement.style.width = '100%';
-          placeAutocompleteElement.style.borderRadius = '0.5rem';
-          placeAutocompleteElement.style.marginBottom = '0.5rem';
-          
-          // Add the element to our container
-          autocompleteRef.current.appendChild(placeAutocompleteElement);
-          
-          // Listen for place selection events
-          // @ts-ignore - TypeScript definitions might not be up to date with the newest API
-          placeAutocompleteElement.addEventListener('gmp-placeselect', (event: any) => {
-            const place = event.detail?.place;
-            if (place) {
-              setFormData(prev => ({ 
-                ...prev, 
-                address: place.formattedAddress || place.formatted_address || '',
-                // If the place name is empty, use the name from the place details
-                placeName: prev.placeName || place.displayName || place.name || ''
-              }));
-              logger.info('APP', 'Place selected:', place);
-            }
-          });
-        } catch (error) {
-          logger.error('APP', 'Error initializing PlaceAutocompleteElement:', error);
-          toast.error(
-            'Unable to initialize location search. Please try again or contact support.',
-            {
-              duration: 5000,
-              icon: <FontAwesomeIcon icon={faXmark} className="text-red-500" />,
-            }
-          );
-        }
-      }
+      initializeAutocomplete();
     } else {
       // If Google Maps API is not yet loaded, set up an interval to check
       const checkGoogleMapsInterval = setInterval(() => {
         if (typeof window !== 'undefined' && window.google && window.google.maps) {
           setGoogleMapsLoaded(true);
+          initializeAutocomplete();
           clearInterval(checkGoogleMapsInterval);
         }
       }, 100);
-      
+
       // Clear interval on component unmount
-      return () => clearInterval(checkGoogleMapsInterval);
+      return () => {
+        clearInterval(checkGoogleMapsInterval);
+        // Clean up listener on unmount
+        if (listenerRef.current && autocompleteInstanceRef.current) {
+          autocompleteInstanceRef.current.removeEventListener('gmp-placeselect', listenerRef.current);
+        }
+      };
     }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate that we have an address from the autocomplete
     if (!formData.address) {
       toast.error(
@@ -109,7 +184,7 @@ export default function Submit() {
       );
       return;
     }
-    
+
     setIsSubmitting(true);
 
     try {
@@ -122,9 +197,9 @@ export default function Submit() {
       });
 
       if (!response.ok) throw new Error('Failed to submit');
-      
+
       toast.success(
-        "Thanks for the submission! We'll check it out!", 
+        "Thanks for the submission! We'll check it out!",
         {
           duration: 5000,
           icon: <FontAwesomeIcon icon={faCheck} className="text-green-500" />,
@@ -136,42 +211,13 @@ export default function Submit() {
         }
       );
       setFormData({ placeName: '', address: '', additionalComments: '', email: '' });
-      
+
       // Reset the autocomplete element
-      if (autocompleteRef.current) {
-        // Re-initialize the autocomplete element
-        autocompleteRef.current.innerHTML = '';
-        if (window.google && window.google.maps) {
-          // @ts-ignore
-          const newPlaceAutocompleteElement = new window.google.maps.places.PlaceAutocompleteElement({
-            types: ['establishment', 'address'],
-            componentRestrictions: { country: 'us' }
-          });
-          
-          newPlaceAutocompleteElement.style.width = '100%';
-          newPlaceAutocompleteElement.style.borderRadius = '0.5rem';
-          newPlaceAutocompleteElement.style.marginBottom = '0.5rem';
-          
-          autocompleteRef.current.appendChild(newPlaceAutocompleteElement);
-          
-          // Re-attach the event listener
-          // @ts-ignore
-          newPlaceAutocompleteElement.addEventListener('gmp-placeselect', (event: any) => {
-            const place = event.detail?.place;
-            if (place) {
-              setFormData(prev => ({ 
-                ...prev, 
-                address: place.formattedAddress || place.formatted_address || '',
-                placeName: prev.placeName || place.displayName || place.name || ''
-              }));
-            }
-          });
-        }
-      }
+      initializeAutocomplete();
     } catch (error) {
       logger.error('APP', 'Submit error:', error);
       toast.error(
-        'Something went wrong. Please try again.', 
+        'Something went wrong. Please try again.',
         {
           duration: 5000,
           icon: <FontAwesomeIcon icon={faXmark} className="text-red-500" />,
@@ -190,7 +236,7 @@ export default function Submit() {
   return (
     <div className="page-container">
       <MenuBar />
-      <Toaster 
+      <Toaster
         position="top-center"
         toastOptions={{
           className: 'rounded-lg shadow-lg',
@@ -227,20 +273,25 @@ export default function Submit() {
                 Address
               </label>
               {/* Autocomplete Element container */}
-              <div 
+              <div
                 id="place-autocomplete"
                 ref={autocompleteRef}
                 className="w-full"
-              ></div>
-              {formData.address && (
-                <p className="text-xs text-green-600 mt-1">
-                  <FontAwesomeIcon icon={faCheck} className="mr-1" />
-                  Selected: {formData.address}
-                </p>
-              )}
-              <p className="text-xs text-gray-500 mt-1">
-                Search for the restaurant and select from the dropdown
-              </p>
+              >
+                {/* Fallback input that shows while Google Maps loads */}
+                <input
+                  type="text"
+                  id="address-input"
+                  name="address"
+                  placeholder="Search for a restaurant or enter address..."
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  defaultValue={formData.address}
+                  onChange={(e) => {
+                    // Update form data when typing manually
+                    setFormData(prev => ({ ...prev, address: e.target.value }));
+                  }}
+                />
+              </div>
             </div>
 
             <div>
@@ -285,4 +336,4 @@ export default function Submit() {
       </div>
     </div>
   );
-} 
+}
