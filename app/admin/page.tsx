@@ -25,6 +25,7 @@ declare global {
       maps: {
         places: {
           Autocomplete: any;
+          PlaceAutocompleteElement: any;
         }
       }
     }

@@ -12,6 +12,7 @@ declare global {
     google: {
       maps: {
         places: {
+          Autocomplete: any;
           PlaceAutocompleteElement: any;
         }
       }
