@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDroplet, faFire, faDrumstickBite } from '@fortawesome/free-solid-svg-icons';
+import { faDroplet, faFire, faDrumstickBite, faFootball, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import Lottie from 'lottie-react';
 import wingAnimation from '../animations/wings.json';
 import { formatNumber } from '../utils/formatNumber';
@@ -17,6 +17,7 @@ interface WingSpot {
   meat: number;
   instagram?: string;
   mapUrl?: string;
+  isUpNext?: boolean;  // Flag to identify if this is from Up Next
 }
 
 interface SpotDetailsProps {
@@ -32,6 +33,14 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
   const [loadingPhotos, setLoadingPhotos] = useState(true);
   const [loading, setLoading] = useState(true);
   const [coordinates, setCoordinates] = useState<google.maps.LatLngLiteral | null>(null);
+  
+  // Check if this is an unranked spot (all ratings are 0 or it has the isUpNext flag)
+  const isUnranked = spot.isUpNext || (
+    spot.overallRanking === 0 && 
+    spot.sauce === 0 && 
+    spot.crispyness === 0 && 
+    spot.meat === 0
+  );
 
   useEffect(() => {
     if (!spot) return;
@@ -164,15 +173,17 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
                 @{spot.instagram}
               </a>
             )}
-            <button
-              onClick={onShare}
-              className="text-deep-orange-500 hover:text-deep-orange-600 transition-colors flex items-center gap-2 text-sm font-medium"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-              Share
-            </button>
+            {!isUnranked && (
+              <button
+                onClick={onShare}
+                className="text-deep-orange-500 hover:text-deep-orange-600 transition-colors flex items-center gap-2 text-sm font-medium"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                Share
+              </button>
+            )}
           </div>
         </div>
 
@@ -186,42 +197,140 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
         </div>
       </div>
 
+      {/* Scouting in Progress Banner for Unranked Spots */}
+      {isUnranked && (
+        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg p-3 shadow-md animate-slide-in-right">
+          <div className="flex items-center justify-center gap-2">
+            <FontAwesomeIcon icon={faFootball} className="text-yellow-400 text-base animate-pulse" />
+            <div className="text-center">
+              <div className="font-bold text-base tracking-wide">🏈 SCOUTING IN PROGRESS 🏈</div>
+              <div className="text-xs opacity-90 mt-0.5">Check back Sunday for our review!</div>
+            </div>
+            <FontAwesomeIcon icon={faFootball} className="text-yellow-400 text-base animate-pulse" style={{ animationDelay: '0.5s' }} />
+          </div>
+        </div>
+      )}
+
       {/* Ratings Grid */}
       <div className="bg-gradient-to-r from-deep-orange-300/80 to-deep-orange-400/60 rounded-xl p-3 animate-fade-in">
         <div className="grid grid-cols-4 gap-3">
           <div className="flex flex-col items-center justify-center p-2.5 bg-white/95 rounded-lg shadow-sm">
-            <span className={`text-xl font-bold animate-number-pop animate-score-pulse ${
-              spot.overallRanking < 5 ? 'text-red-500' : 
-              spot.overallRanking >= 8 ? 'text-green-500' : 
-              'text-yellow-500'
-            }`}>
-              {formatNumber(spot.overallRanking, 'overall')}
-            </span>
-            <span className="text-xs text-gray-700 font-semibold mt-0.5">Overall</span>
+            {isUnranked ? (
+              <>
+                <span className="text-xl font-bold text-yellow-500 animate-question-wobble">
+                  <FontAwesomeIcon icon={faQuestion} />
+                </span>
+                <span className="text-xs text-gray-700 font-semibold mt-0.5">Overall</span>
+                <span className="text-[9px] text-gray-500 text-center">Soon</span>
+              </>
+            ) : (
+              <>
+                <span className={`text-xl font-bold animate-number-pop animate-score-pulse ${
+                  spot.overallRanking < 5 ? 'text-red-500' : 
+                  spot.overallRanking >= 8 ? 'text-green-500' : 
+                  'text-yellow-500'
+                }`}>
+                  {formatNumber(spot.overallRanking, 'overall')}
+                </span>
+                <span className="text-xs text-gray-700 font-semibold mt-0.5">Overall</span>
+              </>
+            )}
           </div>
           <div className="flex flex-col items-center justify-center p-2.5 bg-white/95 rounded-lg shadow-sm">
-            <div className="flex items-center gap-1">
-              <span className="text-xl font-bold text-secondary animate-number-pop [animation-delay:100ms] animate-score-wiggle">{formatNumber(spot.sauce, 'sauce')}</span>
-              <FontAwesomeIcon icon={faDroplet} className="icon-sauce w-3.5 h-3.5 animate-icon-bounce" />
-            </div>
-            <span className="text-xs text-gray-700 font-semibold mt-0.5">Sauce</span>
+            {isUnranked ? (
+              <>
+                <span className="text-xl font-bold text-secondary animate-question-wobble" style={{ animationDelay: '0.1s' }}>
+                  <FontAwesomeIcon icon={faQuestion} />
+                </span>
+                <span className="text-xs text-gray-700 font-semibold mt-0.5">Sauce</span>
+                <span className="text-[9px] text-gray-500">TBD</span>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1">
+                  <span className="text-xl font-bold text-secondary animate-number-pop [animation-delay:100ms] animate-score-wiggle">{formatNumber(spot.sauce, 'sauce')}</span>
+                  <FontAwesomeIcon icon={faDroplet} className="icon-sauce w-3.5 h-3.5 animate-icon-bounce" />
+                </div>
+                <span className="text-xs text-gray-700 font-semibold mt-0.5">Sauce</span>
+              </>
+            )}
           </div>
           <div className="flex flex-col items-center justify-center p-2.5 bg-white/95 rounded-lg shadow-sm">
-            <div className="flex items-center gap-1">
-              <span className="text-xl font-bold text-accent animate-number-pop [animation-delay:200ms] animate-score-pulse">{formatNumber(spot.crispyness, 'crispy')}</span>
-              <FontAwesomeIcon icon={faFire} className="icon-crispy w-3.5 h-3.5 animate-icon-bounce" />
-            </div>
-            <span className="text-xs text-gray-700 font-semibold mt-0.5">Crispy</span>
+            {isUnranked ? (
+              <>
+                <span className="text-xl font-bold text-accent animate-question-wobble" style={{ animationDelay: '0.2s' }}>
+                  <FontAwesomeIcon icon={faQuestion} />
+                </span>
+                <span className="text-xs text-gray-700 font-semibold mt-0.5">Crispy</span>
+                <span className="text-[9px] text-gray-500">TBD</span>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1">
+                  <span className="text-xl font-bold text-accent animate-number-pop [animation-delay:200ms] animate-score-pulse">{formatNumber(spot.crispyness, 'crispy')}</span>
+                  <FontAwesomeIcon icon={faFire} className="icon-crispy w-3.5 h-3.5 animate-icon-bounce" />
+                </div>
+                <span className="text-xs text-gray-700 font-semibold mt-0.5">Crispy</span>
+              </>
+            )}
           </div>
           <div className="flex flex-col items-center justify-center p-2.5 bg-white/95 rounded-lg shadow-sm">
-            <div className="flex items-center gap-1">
-              <span className="text-xl font-bold text-primary-light animate-number-pop [animation-delay:300ms] animate-score-wiggle">{formatNumber(spot.meat, 'meat')}</span>
-              <FontAwesomeIcon icon={faDrumstickBite} className="icon-meat w-3.5 h-3.5 animate-icon-bounce" />
-            </div>
-            <span className="text-xs text-gray-700 font-semibold mt-0.5">Meat</span>
+            {isUnranked ? (
+              <>
+                <span className="text-xl font-bold text-primary-light animate-question-wobble" style={{ animationDelay: '0.3s' }}>
+                  <FontAwesomeIcon icon={faQuestion} />
+                </span>
+                <span className="text-xs text-gray-700 font-semibold mt-0.5">Meat</span>
+                <span className="text-[9px] text-gray-500">TBD</span>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1">
+                  <span className="text-xl font-bold text-primary-light animate-number-pop [animation-delay:300ms] animate-score-wiggle">{formatNumber(spot.meat, 'meat')}</span>
+                  <FontAwesomeIcon icon={faDrumstickBite} className="icon-meat w-3.5 h-3.5 animate-icon-bounce" />
+                </div>
+                <span className="text-xs text-gray-700 font-semibold mt-0.5">Meat</span>
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes question-wobble {
+          0%, 100% {
+            transform: rotate(-10deg) scale(1);
+          }
+          25% {
+            transform: rotate(10deg) scale(1.1);
+          }
+          50% {
+            transform: rotate(-5deg) scale(0.95);
+          }
+          75% {
+            transform: rotate(5deg) scale(1.05);
+          }
+        }
+        
+        @keyframes slide-in-right {
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        
+        .animate-question-wobble {
+          animation: question-wobble 2s ease-in-out infinite;
+        }
+        
+        .animate-slide-in-right {
+          animation: slide-in-right 0.5s ease-out;
+        }
+      `}</style>
 
       {/* Photos Section */}
       {photos.length > 0 && (
@@ -289,4 +398,4 @@ export default function SpotDetails({ spot, photos, onPhotoClick, onShare }: Spo
       </div>
     </div>
   );
-} 
+}

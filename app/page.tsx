@@ -26,6 +26,7 @@ export const runtime = 'edge';
 export const preferredRegion = 'auto';
 
 const InstagramEmbed = nextDynamic(() => import('./components/InstagramEmbed'), { ssr: false });
+const UpNextSpot = nextDynamic(() => import('./components/UpNextSpot'), { ssr: false });
 
 // Add this type declaration at the top after imports
 declare global {
@@ -258,13 +259,19 @@ export default function Home() {
               )}
             </div>
 
-            <div className="slide-up">
+            <div className="slide-up scrollbar-hidden">
               <h2 className="text-2xl font-bold mb-4 invisible">Spacer</h2>
+              <div className="mb-6">
+                <UpNextSpot 
+                  onSpotClick={handleSpotClick} 
+                  allSpots={allSpots}
+                />
+              </div>
               <InstagramEmbed />
             </div>
           </div>
 
-          <div className="mt-8 card p-4 slide-up">
+          <div className="mt-6 card p-4 slide-up">
             <WingMap 
               onSpotSelect={(spot) => setSelectedSpot(spot)} 
               reviewedSpots={allSpots}

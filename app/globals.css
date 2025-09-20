@@ -395,6 +395,18 @@ h2 {
   display: inline-block;
 }
 
+/* Hide scrollbars while maintaining scroll functionality */
+.scrollbar-hidden {
+  /* Hide scrollbar for Chrome, Safari, and Opera */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
+}
+
 /* Ranking list hover effects */
 .ranking-row {
   position: relative;
