@@ -76,6 +76,12 @@ export default function AdminPage() {
       try {
         logger.info('ADMIN', 'Initializing Google Places Autocomplete');
 
+        // Clean up previous instance
+        if (autocompleteInstanceRef.current) {
+          // @ts-ignore
+          google.maps.event.clearInstanceListeners(autocompleteInstanceRef.current);
+        }
+
         // Create input element
         let inputElement = document.getElementById('up-next-input') as HTMLInputElement;
         if (!inputElement && autocompleteRef.current) {
@@ -89,6 +95,7 @@ export default function AdminPage() {
         }
 
         // Create autocomplete instance
+        // @ts-ignore
         const autocomplete = new window.google.maps.places.Autocomplete(inputElement, {
           componentRestrictions: { country: 'us' }
         });
