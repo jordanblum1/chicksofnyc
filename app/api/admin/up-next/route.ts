@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
 import logger from '../../../utils/logger';
 
-const UP_NEXT_FILE = path.join(process.cwd(), 'up-next.json');
+const UP_NEXT_KEY = 'up_next_spot';
+
+// Helper function to check if KV is available
+function isKvAvailable() {
+  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+}
 
 // Helper function to read the up next data
 async function readUpNext() {
   try {
-    const data = await fs.readFile(UP_NEXT_FILE, 'utf-8');
-    return JSON.parse(data);
+    if (!isKvAvailable()) {
+      logger.warn('UP_NEXT', 'KV not available, returning null');
+      return { spot: null };
+    }
+    
+    const data = await kv.get(UP_NEXT_KEY);
+    return data || { spot: null };
   } catch (error) {
-    // File doesn't exist or is invalid, return null
+    logger.error('UP_NEXT', 'Error reading up next data:', error);
     return { spot: null };
   }
 }
@@ -19,10 +28,15 @@ async function readUpNext() {
 // Helper function to write the up next data
 async function writeUpNext(data: any) {
   try {
-    await fs.writeFile(UP_NEXT_FILE, JSON.stringify(data, null, 2));
+    if (!isKvAvailable()) {
+      logger.warn('UP_NEXT', 'KV not available, cannot save data');
+      return false;
+    }
+    
+    await kv.set(UP_NEXT_KEY, data);
     return true;
   } catch (error) {
-    logger.error('API', 'Error writing up next file:', error);
+    logger.error('UP_NEXT', 'Error writing up next data:', error);
     return false;
   }
 }
